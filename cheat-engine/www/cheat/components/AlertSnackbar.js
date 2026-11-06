@@ -5,7 +5,6 @@ export default {
 
     template: `
 <v-snackbar
-    app
     top
     left
     :color="color"

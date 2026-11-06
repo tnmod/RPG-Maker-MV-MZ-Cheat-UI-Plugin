@@ -8,6 +8,7 @@ import SaveRecallPanel from './panels/SaveRecallPanel.js'
 import TeleportPanel from './panels/TeleportPanel.js'
 import ShortcutPanel from './panels/ShortcutPanel.js'
 import TranslateSettingsPanel from './panels/TranslateSettingsPanel.js'
+import LauncherSettingsPanel from './panels/LauncherSettingsPanel.js'
 import { KEY_VALUE_STORAGE } from './js/KeyValueStorage.js'
 import { readSavedLocations } from './js/SavedLocations.js'
 
@@ -44,10 +45,11 @@ const navigationItems = [
         fillHeight: true
     },
     {
-        name: 'Settings', component: 'settings-panel', description: 'Customize keyboard shortcuts and translation.', titleScreen: true,
+        name: 'Settings', component: 'settings-panel', description: 'Customize keyboard shortcuts, translation, and launcher.', titleScreen: true,
         tools: [
             { name: 'Shortcuts', component: 'shortcut-panel', view: ShortcutPanel, description: 'Customize keyboard shortcuts and key bindings.' },
-            { name: 'Translation', component: 'translate-settings-panel', view: TranslateSettingsPanel, description: 'Configure a translation service.' }
+            { name: 'Translation', component: 'translate-settings-panel', view: TranslateSettingsPanel, description: 'Configure a translation service.' },
+            { name: 'Launcher', component: 'launcher-settings-panel', view: LauncherSettingsPanel, description: 'Customize launcher position, appearance, and behavior.' }
         ]
     }
 ]

@@ -7,6 +7,8 @@ import { customizeRPGMakerFunctions } from './init/customize_functions.js'
 import { isOverlayEditableTarget } from './js/OverlayInput.js'
 import { Key } from './js/KeyCodes.js'
 import { createRecording, recordingContext, sameRecordingGame } from './js/GameDataRecorder.js'
+import { REALTIME_TRANSLATOR, TRANSLATE_SETTINGS } from './js/TranslateHelper.js'
+import { LAUNCHER_SETTINGS, LAUNCHER_POSITIONS } from './js/LauncherSettings.js'
 
 const recordingSeconds = 60
 
@@ -15,24 +17,28 @@ export default {
     components: { CheatModal, AlertSnackbar, ConfirmDialog },
     template: `
 <div class="cheat-workspace" @keydown.esc.capture="onOverlayEscape" @focusin="resetPressedKeys">
-    <div v-if="!show && recorder.active" class="cheat-launcher cheat-recorder-indicator" aria-label="Recording game data">
+    <div v-if="!show && recorder.active" class="cheat-launcher cheat-recorder-indicator" :style="launcherPositionStyle" aria-label="Recording game data">
         <span class="cheat-recorder-time">REC {{recorder.remaining}}s</span>
         <button type="button" class="cheat-button" @click="finishRecording(true)">Stop</button>
     </div>
-    <button v-else-if="!show && recorder.resultsPending" type="button" class="cheat-launcher" @click="openCheatModal('recorder-panel')">View results</button>
-    <button
-        v-else-if="!show"
-        ref="launcher"
-        type="button"
-        class="cheat-launcher"
-        aria-label="Open cheat console"
-        aria-controls="cheat-modal"
-        :aria-expanded="String(show)"
-        @click="openCheatModal()">
-        <span class="cheat-launcher__symbol" aria-hidden="true">✦</span>
-        <span>Cheats</span>
-        <kbd>{{toggleShortcut()}}</kbd>
-    </button>
+    <button v-else-if="!show && recorder.resultsPending" type="button" class="cheat-launcher" :style="launcherPositionStyle" @click="openCheatModal('recorder-panel')">View results</button>
+
+    <!-- Wrapper for auto-hide hover detection -->
+    <div v-else-if="!show" class="cheat-launcher-wrapper" :class="wrapperClasses" :style="launcherPositionStyle">
+        <button
+            ref="launcher"
+            type="button"
+            class="cheat-launcher"
+            :class="[launcherClasses, 'cheat-launcher--wrapped']"
+            aria-label="Open cheat console"
+            aria-controls="cheat-modal"
+            :aria-expanded="String(show)"
+            @click="openCheatModal()">
+            <span class="cheat-launcher__symbol" aria-hidden="true">✦</span>
+            <span v-if="!isCompactMode">Cheats</span>
+            <kbd v-if="!isCompactMode && showShortcut">{{toggleShortcut()}}</kbd>
+        </button>
+    </div>
     <cheat-modal
         v-if="consoleMounted"
         :key="consoleSession"
@@ -83,19 +89,46 @@ export default {
         }
     },
 
-    beforeDestroy () {
-        this.clearRecording()
-        this.resetPressedKeys()
-        window.removeEventListener('keydown', this.onGlobalKeyDown)
-        window.removeEventListener('keyup', this.onGlobalKeyUp)
-        window.removeEventListener('blur', this.resetPressedKeys)
-        document.removeEventListener('visibilitychange', this.onVisibilityChange)
-        if (this._restoreGameInput) this._restoreGameInput()
-        if (GeneralCheat.toggleCheatModal === this.toggleCheatModal) {
-            GeneralCheat.toggleCheatModal = this._previousToggle
+    computed: {
+        launcherPositionStyle () {
+            return LAUNCHER_SETTINGS.getPositionStyle()
+        },
+        isCompactMode () {
+            return LAUNCHER_SETTINGS.isCompactMode()
+        },
+        showShortcut () {
+            return LAUNCHER_SETTINGS.isShowShortcut()
+        },
+        isFadeWhenHidden () {
+            return LAUNCHER_SETTINGS.isFadeWhenHidden()
+        },
+        fadeOpacity () {
+            return LAUNCHER_SETTINGS.getFadeOpacity()
+        },
+        isAutoHide () {
+            return LAUNCHER_SETTINGS.isAutoHide()
+        },
+        wrapperClasses () {
+            return {
+                'cheat-launcher-wrapper--auto-hide': this.isAutoHide && !this.show
+            }
+        },
+        launcherClasses () {
+            return {
+                'cheat-launcher--compact': this.isCompactMode,
+                'cheat-launcher--faded': this.isFadeWhenHidden && !this.show
+            }
         }
-        if (GeneralCheat.openCheatModal === this.openCheatModal) {
-            GeneralCheat.openCheatModal = this._previousOpen
+    },
+
+    data () {
+        return {
+            currentKey: Key.createEmpty(),
+            show: false,
+            consoleMounted: false,
+            consoleSession: 0,
+            currentComponentName: 'general-panel',
+            recorder: { active: false, remaining: 0, results: null, resultsPending: false, message: '' }
         }
     },
 
@@ -214,6 +247,11 @@ export default {
                 if (this.consoleMounted && party !== this._consoleParty) this.consoleSession++
                 this._consoleParty = party
                 this.consoleMounted = true
+
+                // Initialize real-time translator when game is ready
+                if (TRANSLATE_SETTINGS.isRealtimeEnabled() && typeof SceneManager !== 'undefined') {
+                    REALTIME_TRANSLATOR.initialize()
+                }
             }
             this.show = true
             if (opening) {
@@ -243,6 +281,23 @@ export default {
                 this.closeCheatModal()
             } else {
                 this.openCheatModal(componentName)
+            }
+        },
+
+        beforeDestroy () {
+            this.clearRecording()
+            this.resetPressedKeys()
+            window.removeEventListener('keydown', this.onGlobalKeyDown)
+            window.removeEventListener('keyup', this.onGlobalKeyUp)
+            window.removeEventListener('blur', this.resetPressedKeys)
+            document.removeEventListener('visibilitychange', this.onVisibilityChange)
+            if (this._restoreGameInput) this._restoreGameInput()
+            REALTIME_TRANSLATOR.destroy()
+            if (GeneralCheat.toggleCheatModal === this.toggleCheatModal) {
+                GeneralCheat.toggleCheatModal = this._previousToggle
+            }
+            if (GeneralCheat.openCheatModal === this.openCheatModal) {
+                GeneralCheat.openCheatModal = this._previousOpen
             }
         }
     }

@@ -15,6 +15,7 @@
     inset: 0;
     z-index: 10001;
     pointer-events: none;
+    overflow: hidden;
     color: var(--cheat-text);
     font-family: "Segoe UI", Tahoma, sans-serif;
     font-size: 14px;
@@ -47,8 +48,6 @@
 #rpg-cheat-app .cheat-launcher {
     pointer-events: auto;
     position: fixed;
-    top: 16px;
-    right: 16px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -59,10 +58,56 @@
     background: var(--cheat-bg);
     box-shadow: 0 4px 18px #0005;
     font-weight: 600;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+/* When inside the wrapper, use static positioning (flows inside wrapper) */
+#rpg-cheat-app .cheat-launcher--wrapped {
+    position: static;
 }
 #rpg-cheat-app .cheat-launcher:hover { border-color: var(--cheat-accent); }
 #rpg-cheat-app .cheat-launcher__symbol { font-size: 19px; line-height: 1; color: var(--cheat-accent); }
 #rpg-cheat-app .cheat-launcher kbd { padding-left: 10px; border-left: 1px solid var(--cheat-border); }
+
+/* Compact mode - icon only */
+#rpg-cheat-app .cheat-launcher--compact {
+    padding: 10px;
+    gap: 0;
+}
+#rpg-cheat-app .cheat-launcher--compact .cheat-launcher__symbol {
+    font-size: 22px;
+}
+
+/* Faded when hidden - use opacity only, no pointer-events blocking */
+#rpg-cheat-app .cheat-launcher--faded {
+    opacity: 0.3;
+}
+#rpg-cheat-app .cheat-launcher--faded:hover {
+    opacity: 1;
+}
+
+/* Auto-hide - use wrapper for hover detection */
+#rpg-cheat-app .cheat-launcher-wrapper {
+    position: fixed;
+    z-index: 1000;
+    /* Default position (top-right) - can be overridden by inline styles */
+    top: 16px;
+    right: 16px;
+    bottom: auto;
+    left: auto;
+}
+#rpg-cheat-app .cheat-launcher-wrapper--auto-hide .cheat-launcher {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+#rpg-cheat-app .cheat-launcher-wrapper--auto-hide:hover .cheat-launcher {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    pointer-events: auto;
+}
 
 #rpg-cheat-app .cheat-console {
     pointer-events: auto;
