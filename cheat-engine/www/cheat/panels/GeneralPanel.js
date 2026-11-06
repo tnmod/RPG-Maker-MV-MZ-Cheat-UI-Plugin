@@ -92,7 +92,10 @@ export default {
     </section>
 </div>`,
 
-    props: { section: { type: String, default: 'all' } },
+    props: {
+        section: { type: String, default: 'all' },
+        canEditGold: { type: Function, default: null }
+    },
 
     data () {
         return {
@@ -126,12 +129,11 @@ export default {
 
     methods: {
         initializeVariables () {
+            if (this.section === 'all' || this.section === 'gold') this.refreshGold()
+            if (this.section === 'gold') return
             this.noClip = !!$gamePlayer._through
             this.speed = Number($gamePlayer.moveSpeed())
             this.fixSpeed = SpeedCheat.isFixed()
-            this.gold = typeof $gameParty.gold === 'function' ? $gameParty.gold() : $gameParty._gold
-            this.goldDraft = String(this.gold)
-            this.goldError = ''
             this.gameSpeed = Number(GameSpeedCheat.getRate())
             this.gameSpeedScope = GameSpeedCheat.getSceneOption() === GameSpeedCheat.sceneOptions().battle ? 'battle' : 'all'
         },
@@ -146,7 +148,14 @@ export default {
             SpeedCheat.__writeSettings(this.speed, this.fixSpeed)
         },
 
+        refreshGold () {
+            this.gold = typeof $gameParty.gold === 'function' ? $gameParty.gold() : $gameParty._gold
+            this.goldDraft = String(this.gold)
+            this.goldError = ''
+        },
+
         onGoldChange () {
+            if (this.canEditGold && !this.canEditGold()) return
             const draft = String(this.goldDraft).trim()
             const amount = Number(draft)
             if (!/^\d+$/.test(draft) || !Number.isSafeInteger(amount)) {
@@ -167,7 +176,7 @@ export default {
             if (difference < 0) $gameParty.loseGold(-difference)
             else if (difference > 0) $gameParty.gainGold(difference)
 
-            this.initializeVariables()
+            this.refreshGold()
             this.statusMessage = 'Gold updated to ' + this.formattedGold + '.'
         },
 

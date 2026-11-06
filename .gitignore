@@ -2,3 +2,4 @@
 venv/
 work/
 __pycache__/
+/deploy/output/

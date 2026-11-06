@@ -110,6 +110,8 @@
 }
 #rpg-cheat-app .cheat-close-button:hover { color: var(--cheat-text); background: var(--cheat-surface); }
 #rpg-cheat-app .cheat-console__body { display: flex; flex: 1 1 auto; min-height: 0; }
+/* Keep the list laid out so hiding the console preserves its scroll position. */
+#rpg-cheat-app .cheat-console.cheat-console--hidden { visibility: hidden; pointer-events: none; }
 #rpg-cheat-app .cheat-console__sidebar {
     flex: 0 0 202px;
     padding: 16px 12px;

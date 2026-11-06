@@ -1,121 +1,65 @@
-import os
-import shutil
-from enum import Enum
-import zipfile
+"""Build copy-ready MV and MZ release folders from the repository sources."""
+
 import argparse
 import json
+from pathlib import Path
+import re
+import shutil
 
 
-class GameTypes(Enum):
-    MV = 0
-    MZ = 1
+DEPLOY = Path(__file__).resolve().parent
+SOURCE = DEPLOY.parent / 'cheat-engine' / 'www'
+OUTPUT = DEPLOY / 'output'
+VERSION_PATTERN = re.compile(r'(?P<major>[0-9]+)(?:\.(?P<minor>[0-9]+)(?:\.[0-9]+)?)?(?:-[0-9A-Za-z.-]+)?')
+RELEASE_FOLDER_PATTERN = re.compile(r'rpg-cheat-(.+)|rpg-(?:mv|mz)-cheat-(.+)-core')
 
 
-class CheatPaths:
-    def __init__(self, root_dir):
-        self.root_dir = root_dir
-        self.cheat_dir = 'cheat'
-        self.js_dir = 'js'
-        self.initialize_dir = '_cheat_initialize'
-        self.initialize_game_type_dirs = {
-            GameTypes.MV: 'mv',
-            GameTypes.MZ: 'mz'
-        }
-
-    def get_cheat_source_path(self):
-        return os.path.join(self.root_dir, self.cheat_dir)
-
-    def get_js_source_path(self):
-        return os.path.join(self.root_dir, self.js_dir)
-
-    def get_initialize_path(self, game_type=None):
-        if game_type is None:
-            return os.path.join(self.root_dir, self.initialize_dir)
-
-        return os.path.join(self.root_dir, self.initialize_dir, self.initialize_game_type_dirs[game_type])
+def next_version():
+    versions = []
+    if OUTPUT.is_dir():
+        for folder in OUTPUT.iterdir():
+            release = RELEASE_FOLDER_PATTERN.fullmatch(folder.name)
+            if not release or not folder.is_dir():
+                continue
+            version = VERSION_PATTERN.fullmatch((release[1] or release[2]).removeprefix('v'))
+            if version:
+                versions.append((int(version['major']), int(version['minor'] or 0)))
+    major, minor = max(versions, default=(1, 0))
+    return f'{major}.{minor + 1}'
 
 
-class Paths:
-    def __init__(self):
-        self.temp_root_path = 'tmp'
+def build(version=None):
+    version = next_version() if version is None else version.removeprefix('v')
+    if not VERSION_PATTERN.fullmatch(version):
+        raise ValueError('Expected a version such as 2, v1.4, or 1.1.0-preview.1.')
 
-        self.origin = CheatPaths('../cheat-engine/www')
-        self.temp = CheatPaths(os.path.join(self.temp_root_path, 'www'))
-
-        self.deploy_output_dir = 'output'
-        self.output_files = {
-            GameTypes.MV: 'rpg-mv-cheat-{}-core',
-            GameTypes.MZ: 'rpg-mz-cheat-{}-core'
-        }
-
-    def get_output_file_path(self, game_type, version):
-        return os.path.join(self.deploy_output_dir, self.output_files[game_type]).format(version)
-
-
-def merge_directory(src, dest, inplace=True):
-    if not os.path.exists(dest) and not os.path.isdir(dest):
-        os.makedirs(dest, exist_ok=True)
-
-    files = [os.path.join(src, file) for file in os.listdir(src)]
-
-    dirs = [file for file in files if os.path.isdir(file)]
-    files = [file for file in files if os.path.isfile(file)]
-
-    for src_file in files:
-        file_name = os.path.basename(src_file)
-        dest_file = os.path.join(dest, file_name)
-
-        # do not copy if not inplace mode and file exists in dest directory
-        if not inplace and os.path.exists(dest) and os.path.isfile(dest_file):
-            continue
-
-        print(f'{src_file}  ->  {dest_file}')
-        shutil.copy2(src_file, dest_file)
-
-    for src_dir in dirs:
-        dir_name = os.path.basename(src_dir)
-        dest_dir = os.path.join(dest, dir_name)
-
-        merge_directory(src_dir, dest_dir, inplace)
-
-
-def create_cheat_version_file(version, paths):
-    with open(os.path.join(paths.temp.root_dir, 'cheat-version-description.json'), 'w') as wf:
-        data = {
-            'version': f'v{version}'
-        }
-        json.dump(data, wf, indent=2)
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    destination = OUTPUT / f'rpg-cheat-v{version}'
+    destination.mkdir()
+    try:
+        for engine in ('mv', 'mz'):
+            payload = destination / 'source' / f'rpg-{engine}-cheat-{version}-core'
+            game_files = payload / 'www' if engine == 'mv' else payload
+            shutil.copytree(SOURCE / 'cheat', game_files / 'cheat')
+            shutil.copytree(SOURCE / '_cheat_initialize' / engine / 'js', game_files / 'js')
+            (game_files / 'cheat-version-description.json').write_text(
+                json.dumps({'version': f'v{version}'}, indent=2) + '\n', encoding='utf-8'
+            )
+        shutil.copy2(DEPLOY / 'menu.bat', destination / 'menu.bat')
+        shutil.copy2(DEPLOY / 'install.ps1', destination / 'source' / 'install.ps1')
+        shutil.copy2(DEPLOY / 'ModLoaderBootstrap.js', destination / 'source' / 'ModLoaderBootstrap.js')
+    except OSError:
+        if not destination.is_symlink() and destination.resolve().parent == OUTPUT.resolve():
+            shutil.rmtree(destination)
+        raise
+    print(destination)
 
 
 if __name__ == '__main__':
-    # parse args
-    parser = argparse.ArgumentParser(description='RPG Maker MV/MZ cheat deploy maker')
-    parser.add_argument('--version', required=True, type=str, help='version of deployment')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-v', '--version', help='Exact release version. Omit to increment the latest minor version.')
     args = parser.parse_args()
-
-    paths = Paths()
-
-    for game_type in GameTypes:
-        # copy js sources to temp directory
-        shutil.copytree(paths.origin.root_dir, paths.temp.root_dir)
-
-        # merge cheat sources
-        merge_directory(
-            os.path.join(paths.temp.get_initialize_path(game_type), os.path.basename(paths.temp.get_cheat_source_path())),
-            paths.temp.get_cheat_source_path())
-
-        # copy js
-        shutil.copytree(
-            os.path.join(paths.temp.get_initialize_path(game_type), os.path.basename(paths.temp.get_js_source_path())),
-            paths.temp.get_js_source_path())
-
-        # remove initialize path
-        shutil.rmtree(paths.temp.get_initialize_path())
-
-        # compress to zip file
-        shutil.rmtree(os.path.join(paths.temp.root_dir, '.idea'))
-        create_cheat_version_file(args.version, paths)
-        shutil.make_archive(paths.get_output_file_path(game_type, args.version), 'gztar', paths.temp.root_dir)
-
-        # remove temp directory
-        shutil.rmtree(paths.temp_root_path)
+    try:
+        build(args.version)
+    except (OSError, ValueError) as error:
+        parser.exit(1, f'{error}\n')

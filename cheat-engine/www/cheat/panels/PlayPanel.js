@@ -18,7 +18,7 @@ export default {
             <span class="cheat-play-group__description">{{group.description}}</span>
             <span class="cheat-play-group__chevron" aria-hidden="true">⌄</span>
         </summary>
-        <div v-if="openGroups[group.id]" class="cheat-play-group__body">
+        <div class="cheat-play-group__body">
             <component :is="group.component" ref="groupPanels" :section="group.section || 'all'"></component>
         </div>
     </details>

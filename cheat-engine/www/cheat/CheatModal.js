@@ -14,8 +14,8 @@ import { readSavedLocations } from './js/SavedLocations.js'
 const navigationItems = [
     {
         name: 'General', component: 'general-panel', description: 'Gold, party, movement, combat and saves.',
-        keywords: 'general battle stats level exp health hp mp tp god mode speed no clip encounters attributes',
-        aliases: ['general-panel', 'health-setting-panel', 'stats-setting-panel']
+        keywords: 'general play battle stats level exp health hp mp tp god mode speed no clip encounters attributes',
+        aliases: ['play-panel', 'health-setting-panel', 'stats-setting-panel']
     },
     {
         name: 'Inventory', component: 'inventory-panel', keywords: 'equipment amount quantity',
@@ -40,7 +40,7 @@ const navigationItems = [
         ]
     },
     {
-        name: 'Recorder', component: 'recorder-panel', keywords: 'record changes tracking variables switches inventory',
+        name: 'Recorder', component: 'recorder-panel', keywords: 'record changes tracking variables switches inventory gold money',
         fillHeight: true
     },
     {
@@ -63,7 +63,8 @@ export default {
     },
 
     template: `
-<section class="cheat-console" :class="{'cheat-console--maximized': maximized}" role="dialog" aria-labelledby="cheat-console-title">
+<section class="cheat-console" :class="{'cheat-console--maximized': maximized, 'cheat-console--hidden': !visible}"
+    :aria-hidden="visible ? null : 'true'" role="dialog" aria-labelledby="cheat-console-title">
     <header class="cheat-console__header">
         <div class="cheat-console__brand">
             <span class="cheat-console__mark" aria-hidden="true">+</span>
@@ -107,13 +108,13 @@ export default {
                 <template v-if="gameReady || activeItem.titleScreen">
                     <recorder-panel v-if="activeItem.component === 'recorder-panel'" :recorder="recorder" :can-edit="canEditRecording"
                         @start="$emit('start-recording')" @stop="$emit('stop-recording')"></recorder-panel>
+                    <play-panel v-else-if="activeItem.component === 'general-panel'"></play-panel>
                     <item-table-tab v-else-if="inventoryTool" :items="inventoryTool.readItems() || []"
                         :categories="activeItem.tools" :category="inventoryTool.component"
                         @category-change="selectTool"></item-table-tab>
                     <grouped-tools-panel v-else-if="activeItem.tools" :key="activeItem.component"
                         :tools="activeTools" :active-component="currentComponentName" :label="activeItem.name"
                         @change="selectTool" @saved-locations-change="setSavedLocationCount"></grouped-tools-panel>
-                    <component v-else :is="activeItem.component"></component>
                 </template>
                 <div v-else class="cheat-empty-state" role="status">
                     <span class="cheat-empty-state__symbol" aria-hidden="true">◇</span>
@@ -134,6 +135,7 @@ export default {
 
     props: {
         currentComponentName: { type: String, default: 'general-panel' },
+        visible: { type: Boolean, default: true },
         recorder: { type: Object, required: true },
         canEditRecording: { type: Function, required: true }
     },
@@ -179,6 +181,9 @@ export default {
     },
 
     watch: {
+        visible (visible) {
+            if (visible) this.refreshGameReady()
+        },
         currentComponentName: {
             immediate: true,
             handler (component) { this.rememberTool(component) }
@@ -186,7 +191,9 @@ export default {
     },
 
     mounted () {
-        this.readinessTimer = setInterval(this.refreshGameReady, 500)
+        this.readinessTimer = setInterval(() => {
+            if (this.visible) this.refreshGameReady()
+        }, 500)
     },
 
     beforeDestroy () {

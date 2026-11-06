@@ -1,15 +1,17 @@
 import GameDataEditor from '../components/GameDataEditor.js'
+import GeneralPanel from './GeneralPanel.js'
 import ItemTableTab from './ItemTableTab.js'
 
 const groups = [
     { id: 'variables', label: 'Variables' },
     { id: 'switches', label: 'Switches' },
-    { id: 'inventory', label: 'Inventory' }
+    { id: 'inventory', label: 'Inventory' },
+    { id: 'gold', label: 'Gold' }
 ]
 
 export default {
     name: 'RecorderPanel',
-    components: { GameDataEditor, ItemTableTab },
+    components: { GameDataEditor, GeneralPanel, ItemTableTab },
     props: { recorder: { type: Object, required: true }, canEdit: { type: Function, required: true } },
     template: `
 <div class="cheat-data-page cheat-recorder-page">
@@ -23,7 +25,7 @@ export default {
             <span v-if="recorder.results" class="cheat-result-count">{{total.toLocaleString()}} changed</span>
             <label v-if="total" class="cheat-sort">
                 <select v-model="kind" aria-label="Recorded data type">
-                    <option v-for="group in groups" :key="group.id" :value="group.id">{{group.label}} ({{count(group.id)}})</option>
+                    <option v-for="group in resultGroups" :key="group.id" :value="group.id">{{group.label}} ({{count(group.id)}})</option>
                 </select>
             </label>
         </template>
@@ -32,6 +34,7 @@ export default {
     <template v-if="!recorder.active && total">
         <item-table-tab v-if="kind === 'inventory'" :items="recordedInventory" :as-table-data="inventoryRow"
             :searchable-attrs="['name', 'desc', 'kind']" :can-edit="canEdit"></item-table-tab>
+        <general-panel v-else-if="kind === 'gold'" :key="kind" section="gold" :can-edit-gold="canEdit"></general-panel>
         <game-data-editor v-else :key="kind" :kind="kind" :record-ids="recorder.results[kind]" :can-edit="canEdit"></game-data-editor>
     </template>
     <div v-else-if="recorder.active" class="cheat-list-empty">Play the game to capture changes, then press Stop.</div>
@@ -40,11 +43,12 @@ export default {
             {{recorder.results ? 'Record again' : 'Record'}}
         </button>
         <p v-if="recorder.results">No changes recorded. Try again while performing the action you want to inspect.</p>
-        <p v-else>Capture up to 60 seconds of changes to variables, switches and inventory.</p>
+        <p v-else>Capture up to 60 seconds of changes to variables, switches, inventory and gold.</p>
     </div>
 </div>`,
-    data () { return { groups, kind: 'variables' } },
+    data () { return { kind: 'variables' } },
     computed: {
+        resultGroups () { return groups.filter(group => this.count(group.id)) },
         total () { return groups.reduce((total, group) => total + this.count(group.id), 0) },
         recordedInventory () {
             const results = this.recorder.results
@@ -58,7 +62,7 @@ export default {
         'recorder.results': {
             immediate: true,
             handler () {
-                const group = groups.find(group => this.count(group.id))
+                const group = this.resultGroups[0]
                 this.kind = group ? group.id : 'variables'
             }
         }

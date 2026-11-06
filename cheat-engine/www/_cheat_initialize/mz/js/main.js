@@ -3,7 +3,6 @@
 //=============================================================================
 
 const scriptUrls = [
-    "../../cheat/init/import.js",
     "js/libs/pixi.js",
     "js/libs/pako.min.js",
     "js/libs/localforage.min.js",
@@ -15,7 +14,8 @@ const scriptUrls = [
     "js/rmmz_scenes.js",
     "js/rmmz_sprites.js",
     "js/rmmz_windows.js",
-    "js/plugins.js"
+    "js/plugins.js",
+    "cheat/init/import.js"
 ];
 const effekseerWasmUrl = "js/libs/effekseer.wasm";
 

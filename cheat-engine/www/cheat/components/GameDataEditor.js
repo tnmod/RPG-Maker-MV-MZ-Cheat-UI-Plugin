@@ -33,14 +33,14 @@ export default {
         <template v-slot:default="{item}">
             <div class="cheat-state-row" :data-record-id="item.id">
                 <div class="cheat-row-title">
-                    <span class="cheat-record-name" :title="item.name">{{item.name || 'Unnamed ' + singularName}}</span>
-                    <span class="cheat-row-meta">#{{item.id}}<span v-if="!isSwitches"> · {{item.type}}</span></span>
+                    <span class="cheat-record-name" :title="item.name">{{item.name || singularName + ' #' + item.id}}</span>
+                    <span class="cheat-row-meta"><span v-if="!isSwitches"> · {{item.type}}</span></span>
                 </div>
                 <button v-if="isSwitches" type="button" class="cheat-switch" :class="{'is-on': item.value}"
-                    role="switch" :aria-checked="String(item.value)" :aria-label="'Switch ' + (item.name || '#' + item.id)"
+                    role="switch" :aria-checked="String(item.value)" :aria-label="item.name || 'Switch #' + item.id"
                     @click="toggleSwitch(item)"><span class="cheat-switch__track" aria-hidden="true"></span>{{item.value ? 'On' : 'Off'}}</button>
                 <input v-else-if="!item.readOnly" class="cheat-row-number cheat-row-value" :type="item.type === 'number' ? 'number' : 'text'"
-                    step="any" v-model="item.draft" :aria-label="'Value for ' + (item.name || '#' + item.id)"
+                    step="any" v-model="item.draft" :aria-label="'Value for ' + (item.name || singularName + ' #' + item.id)"
                     :aria-invalid="invalidId === item.id ? 'true' : 'false'" :aria-describedby="invalidId === item.id ? statusId : null"
                     @change="commitVariable(item)" @keydown.enter.prevent.stop="commitVariable(item)" @keydown.stop @keyup.stop>
                 <span v-else class="cheat-value-preview" :title="item.preview + ' (read only)'">{{item.preview}}<small>Read only</small></span>
@@ -236,7 +236,7 @@ export default {
                 this.updateRow(item, store.value(item.id))
                 this.invalidId = null
                 this.errorMessage = ''
-                this.statusMessage = (item.name || 'Variable #' + item.id) + ' updated.'
+                this.statusMessage = (item.name || this.singularName + ' #' + item.id) + ' updated.'
             } catch (error) {
                 this.invalidId = item.id
                 this.errorMessage = 'Could not update this variable. Refresh and try again.'
@@ -252,7 +252,7 @@ export default {
                 store.setValue(item.id, value)
                 this.updateRow(item, store.value(item.id))
                 this.errorMessage = ''
-                this.statusMessage = (item.name || 'Switch #' + item.id) + ' turned ' + (item.value ? 'on.' : 'off.')
+                this.statusMessage = (item.name || this.singularName + ' #' + item.id) + ' turned ' + (item.value ? 'on.' : 'off.')
             } catch (error) {
                 this.errorMessage = 'Could not update this switch. Refresh and try again.'
                 this.statusMessage = ''

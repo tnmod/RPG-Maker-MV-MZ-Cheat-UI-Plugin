@@ -61,7 +61,7 @@
         // Append nodes rather than reparsing the game's existing head.
         addStyle('libs/vuetify.min.css')
         addStyle('libs/mdi/materialdesignicons.min.css')
-        addStyle('css/main.css?v=workspace-8')
+        addStyle('css/main.css?v=workspace-9')
 
         const appDiv = document.createElement('div')
         appDiv.id = 'rpg-cheat-app'

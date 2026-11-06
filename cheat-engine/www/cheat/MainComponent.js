@@ -34,10 +34,12 @@ export default {
         <kbd>{{toggleShortcut()}}</kbd>
     </button>
     <cheat-modal
-        v-if="show"
+        v-if="consoleMounted"
+        :key="consoleSession"
         id="cheat-modal"
         ref="console"
         v-model="currentComponentName"
+        :visible="show"
         :recorder="recorder"
         :can-edit-recording="canEditRecording"
         @start-recording="startRecording"
@@ -52,6 +54,8 @@ export default {
         return {
             currentKey: Key.createEmpty(),
             show: false,
+            consoleMounted: false,
+            consoleSession: 0,
             currentComponentName: 'general-panel',
             recorder: { active: false, remaining: 0, results: null, resultsPending: false, message: '' }
         }
@@ -205,6 +209,12 @@ export default {
             if (componentName) this.currentComponentName = componentName
             if (this.currentComponentName === 'recorder-panel') this.recorder.resultsPending = false
             const opening = !this.show
+            if (opening) {
+                const party = typeof $gameParty === 'undefined' ? null : $gameParty
+                if (this.consoleMounted && party !== this._consoleParty) this.consoleSession++
+                this._consoleParty = party
+                this.consoleMounted = true
+            }
             this.show = true
             if (opening) {
                 if (typeof Input !== 'undefined') Input.clear()
@@ -213,13 +223,14 @@ export default {
                     const console = this.$refs.console
                     if (console) {
                         const search = console.$el.querySelector('input[type="search"]')
-                        if (search) search.focus()
+                        if (search) search.focus({preventScroll: true})
                     }
                 })
             }
         },
 
         closeCheatModal () {
+            this._consoleParty = typeof $gameParty === 'undefined' ? null : $gameParty
             this.show = false
             this.resetPressedKeys()
             this.$nextTick(() => {

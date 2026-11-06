@@ -10,7 +10,7 @@ export function sameRecordingGame (context) {
 }
 
 export function createRecording (context, deadline) {
-    const changes = { variables: new Set(), switches: new Set(), items: new Set(), weapons: new Set(), armors: new Set() }
+    const changes = { variables: new Set(), switches: new Set(), items: new Set(), weapons: new Set(), armors: new Set(), gold: new Set() }
     const restore = []
     let active = true
 
@@ -19,7 +19,7 @@ export function createRecording (context, deadline) {
         while (restore.length) restore.pop()()
     }
 
-    function observe (target, method, identify, readValue) {
+    function observe (target, method, identify, readValue, getId = first => typeof first === 'number' ? first : first.id) {
         const original = target[method]
         if (typeof original !== 'function') throw new Error('Missing game method: ' + method)
         const descriptor = Object.getOwnPropertyDescriptor(target, method)
@@ -29,7 +29,7 @@ export function createRecording (context, deadline) {
             try {
                 kind = identify(first)
                 if (kind) {
-                    id = typeof first === 'number' ? first : first.id
+                    id = getId(first)
                     if (changes[kind].has(id)) kind = null
                     else before = readValue(first)
                 }
@@ -69,6 +69,12 @@ export function createRecording (context, deadline) {
             }
             return null
         }, item => context.party.numItems(item))
+        const party = context.party
+        const readGold = () => typeof party.gold === 'function' ? party.gold() : party._gold
+        // All transactions affect the same balance, regardless of the amount passed in.
+        for (const method of ['gainGold', 'loseGold']) {
+            if (typeof party[method] === 'function') observe(party, method, () => 'gold', readGold, () => 0)
+        }
     } catch (error) {
         stop()
         throw error
