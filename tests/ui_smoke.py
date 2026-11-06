@@ -116,7 +116,7 @@ class ConsoleSmokeTests(unittest.TestCase):
         search.fill('does not exist')
         expect(self.page.get_by_text('No tools found. Try another name.')).to_be_visible()
         search.fill('')
-        expect(self.page.locator('.cheat-nav-button')).to_have_count(5)
+        expect(self.page.locator('.cheat-nav-button')).to_have_count(6)
         self.page.keyboard.press('Escape')
         expect(self.page.locator('.cheat-console')).to_have_count(0)
         expect(self.page.get_by_role('button', name='Open cheat console')).to_be_focused()
@@ -127,7 +127,7 @@ class ConsoleSmokeTests(unittest.TestCase):
     def test_grouped_navigation_search_tabs_keyboard_and_remembered_selection(self):
         self.open_console()
         nav = self.page.locator('.cheat-nav-button')
-        expect(nav).to_have_text(['Play', 'Inventory', 'Travel', 'Game data', 'Settings'])
+        expect(nav).to_have_text(['General', 'Inventory', 'Travel', 'Game data', 'Recorder', 'Settings'])
         search = self.page.get_by_label('Find a tool')
         search.fill('weapons')
         expect(nav).to_have_text(['Inventory'])

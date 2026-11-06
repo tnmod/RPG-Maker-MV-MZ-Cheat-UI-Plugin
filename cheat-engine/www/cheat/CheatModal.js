@@ -1,4 +1,5 @@
 import PlayPanel from './panels/PlayPanel.js'
+import RecorderPanel from './panels/RecorderPanel.js'
 import GroupedToolsPanel from './components/GroupedToolsPanel.js'
 import ItemTableTab from './panels/ItemTableTab.js'
 import VariableSettingPanel from './panels/VariableSettingPanel.js'
@@ -39,6 +40,10 @@ const navigationItems = [
         ]
     },
     {
+        name: 'Recorder', component: 'recorder-panel', keywords: 'record changes tracking variables switches inventory',
+        fillHeight: true
+    },
+    {
         name: 'Settings', component: 'settings-panel', description: 'Customize keyboard shortcuts and translation.', titleScreen: true,
         tools: [
             { name: 'Shortcuts', component: 'shortcut-panel', view: ShortcutPanel, description: 'Customize keyboard shortcuts and key bindings.' },
@@ -52,6 +57,7 @@ export default {
 
     components: {
         PlayPanel,
+        RecorderPanel,
         ItemTableTab,
         GroupedToolsPanel
     },
@@ -92,14 +98,16 @@ export default {
             </div>
         </nav>
 
-        <div class="cheat-console__content" :class="{'cheat-console__content--workspace': !!activeItem.tools}">
+        <div class="cheat-console__content" :class="{'cheat-console__content--workspace': activeItem.tools || activeItem.fillHeight}">
             <header class="cheat-section-header">
                 <h2>{{activeItem.name}}</h2>
                 <p v-if="activeItem.description">{{activeItem.description}}</p>
             </header>
             <div class="cheat-section-body">
                 <template v-if="gameReady || activeItem.titleScreen">
-                    <item-table-tab v-if="inventoryTool" :items="inventoryTool.readItems() || []"
+                    <recorder-panel v-if="activeItem.component === 'recorder-panel'" :recorder="recorder" :can-edit="canEditRecording"
+                        @start="$emit('start-recording')" @stop="$emit('stop-recording')"></recorder-panel>
+                    <item-table-tab v-else-if="inventoryTool" :items="inventoryTool.readItems() || []"
                         :categories="activeItem.tools" :category="inventoryTool.component"
                         @category-change="selectTool"></item-table-tab>
                     <grouped-tools-panel v-else-if="activeItem.tools" :key="activeItem.component"
@@ -124,7 +132,11 @@ export default {
 
     model: { prop: 'currentComponentName', event: 'change' },
 
-    props: { currentComponentName: { type: String, default: 'general-panel' } },
+    props: {
+        currentComponentName: { type: String, default: 'general-panel' },
+        recorder: { type: Object, required: true },
+        canEditRecording: { type: Function, required: true }
+    },
 
     data () {
         return { search: '', gameReady: false, maximized: false, readinessTimer: null, navigationItems,

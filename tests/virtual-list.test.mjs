@@ -202,7 +202,7 @@ function inventoryFixture () {
     let resets = 0
     const vm = {...ItemTableTab.data(), items: [{id: 1, name: 'Potion', description: 'Restore health'},
         {id: 2, name: 'Ether', description: 'Restore MP'}, {id: 3, name: '', description: 'Hidden reward'}],
-        searchableAttrs: ['name', 'desc'], asTableData: item => ({name: item.name, desc: item.description}),
+        searchableAttrs: ['name', 'desc'], asTableData: item => ({name: item.name, desc: item.description}), canEdit: () => true,
         $refs: {list: {resetScroll () { resets++ }}}, $nextTick: fn => fn()}
     for (const [name, fn] of Object.entries(ItemTableTab.methods)) vm[name] = fn.bind(vm)
     Object.defineProperty(vm, 'filteredTableItems', {get: () => ItemTableTab.computed.filteredTableItems.call(vm)})

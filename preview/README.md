@@ -18,6 +18,7 @@ The default fixture uses an MZ label. Add `?engine=MV` to use the MV label and f
 
 - Search navigation by a tool name or description, then select a result.
 - Use the Inventory category selector for Items, Weapons or Armor. Use tabs in Travel, Game data and Settings.
+- To try Recorder, select **Record**, click **Simulate quest reward** in the mock game, then select **Stop**. The results include an unnamed EXP variable, a switch, and the item amount.
 - Open **Play** to use Gold, Party, Movement & speed, Combat, and Save & session groups.
 - Change gold, select **Apply**, and try an invalid amount to see validation feedback.
 - Adjust movement and game speed, and switch between the other tool panels.

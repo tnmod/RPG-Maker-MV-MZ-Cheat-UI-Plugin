@@ -10,7 +10,8 @@ export default {
         asTableData: { type: Function, default: item => ({ name: item.name, desc: item.description }) },
         categories: { type: Array, default: () => [] },
         category: { type: String, default: '' },
-        searchableAttrs: { type: Array, default: () => ['name', 'desc'] }
+        searchableAttrs: { type: Array, default: () => ['name', 'desc'] },
+        canEdit: { type: Function, default: () => true }
     },
     template: `
 <div class="cheat-data-page cheat-inventory-page">
@@ -31,14 +32,16 @@ export default {
         </div>
     </div>
     <div class="cheat-inventory-header" aria-hidden="true"><span>Item</span><span>Description</span><span>Amount</span></div>
-    <virtual-list :key="category" ref="list" :items="filteredTableItems" :item-height="64" item-key="id" label="Inventory entries" empty-message="No items match these filters.">
+    <p v-if="errorMessage || statusMessage" class="cheat-list-status" :class="{'cheat-inline-error': !!errorMessage}"
+        :role="errorMessage ? 'alert' : 'status'" aria-live="polite">{{errorMessage || statusMessage}}</p>
+    <virtual-list :key="category" ref="list" :items="filteredTableItems" :item-height="64" item-key="key" label="Inventory entries" empty-message="No items match these filters.">
         <template v-slot:default="{item}">
             <div class="cheat-inventory-row">
                 <div class="cheat-row-title">
                     <game-icon :icon-index="item._item.iconIndex"></game-icon>
                     <div class="cheat-row-copy">
                         <span class="cheat-row-name" :title="item.name">{{item.name || 'Unnamed item'}}</span>
-                        <span class="cheat-row-meta">#{{item.id}}</span>
+                        <span class="cheat-row-meta">{{item.kind ? item.kind + ' ' : ''}}#{{item.id}}</span>
                         <span v-if="item.desc" class="cheat-row-description--compact" :title="item.desc">{{item.desc}}</span>
                     </div>
                 </div>
@@ -81,6 +84,7 @@ export default {
             this.tableItems = this.items.filter(Boolean).map(item => {
                 const row = this.asTableData(item)
                 row.id = item.id
+                row.key = row.key || item.id
                 row._item = item
                 row.amount = $gameParty.numItems(item)
                 row.draftAmount = String(row.amount)
@@ -95,6 +99,7 @@ export default {
             return Number.isSafeInteger(value) && value >= 0 ? value : 99
         },
         onItemChange (item) {
+            if (!this.canEdit()) return
             const value = String(item.draftAmount).trim()
             const amount = Number(value)
             const maximum = this.maxAmount(item)

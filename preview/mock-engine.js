@@ -71,15 +71,16 @@ Object.defineProperties(actor, {
 })
 window.previewParty = [actor]
 window.$gameParty = {
-    _gold: 12500, _items: { 1: 8, 2: 3 },
+    _gold: 12500, _items: { 1: 8, 2: 3 }, _weapons: {}, _armors: {},
     gold () { return this._gold }, maxGold () { return 99999999 },
     gainGold (amount) { this._gold = Math.min(this.maxGold(), this._gold + amount) },
     loseGold (amount) { this._gold = Math.max(0, this._gold - amount) },
     members () { return previewParty },
     inBattle () { return SceneManager._scene instanceof Scene_Battle && BattleManager._phase !== 'battleEnd' },
     performEscape () {},
-    numItems (item) { return this._items[item.id] || 0 },
-    gainItem (item, amount) { this._items[item.id] = Math.max(0, Math.min(99, this.numItems(item) + Number(amount))) }
+    itemContainer (item) { return $dataWeapons[item.id] === item ? this._weapons : $dataArmors[item.id] === item ? this._armors : this._items },
+    numItems (item) { return this.itemContainer(item)[item.id] || 0 },
+    gainItem (item, amount) { this.itemContainer(item)[item.id] = Math.max(0, Math.min(99, this.numItems(item) + Number(amount))) }
 }
 window.previewEnemies = []
 window.$gameTroop = { members: () => previewEnemies }
@@ -111,15 +112,20 @@ window.$dataItems = [null,
 ]
 window.$dataWeapons = [null, { id: 4, name: 'Iron sword', iconIndex: 96, description: 'A dependable blade.', params: [0, 0, 12, 0, 0, 0, 0, 0] }]
 window.$dataArmors = [null, { id: 5, name: 'Traveler cloak', iconIndex: 128, description: 'A warm cloak.', params: [0, 0, 0, 8, 0, 0, 0, 0] }]
+for (const key of ['$dataItems', '$dataWeapons', '$dataArmors']) {
+    const indexed = [null]
+    for (const item of window[key]) if (item) indexed[item.id] = item
+    window[key] = indexed
+}
 window.$dataSystem = {
-    variables: ['', 'Quest progress', 'Reputation', 'Dungeon depth', 'Arena wins'],
+    variables: ['', 'Quest progress', 'Reputation', 'Dungeon depth', ''],
     switches: ['', 'Gate unlocked', 'Arena registered', 'Quest completed'],
     terms: { params: ['Max HP', 'Max MP', 'Attack', 'Defense', 'Magic attack', 'Magic defense', 'Agility', 'Luck'] }
 }
 function values (initial) {
     return { _data: initial, value (id) { return this._data[id] || 0 }, setValue (id, value) { this._data[id] = value } }
 }
-window.$gameVariables = values([0, 3, 45, 2, 6])
+window.$gameVariables = values([0, 3, 45, 2, 0])
 window.$gameSwitches = values([false, true, false, true])
 window.$gameMap = { mapId: () => 1, width: () => 30, height: () => 20, displayName: () => 'Quiet meadow' }
 window.$dataMapInfos = [null, { id: 1, name: 'Quiet meadow', parentId: 0 }, { id: 2, name: 'Town square', parentId: 0 }]
@@ -182,8 +188,8 @@ const requestedRecords = previewParams.has('records') ? Number(previewParams.get
 const previewRecordCount = Math.max(0, Math.min(20000, Number.isFinite(requestedRecords) ? Math.floor(requestedRecords) : 240))
 for (let ordinal = 8; ordinal <= previewRecordCount; ordinal++) {
     const id = ordinal + 2
-    $dataItems.push({ id, name: 'Alchemy reagent ' + String(id).padStart(5, '0'), iconIndex: 64 + (id % 6),
-        description: 'A crafting material from region ' + (id % 12 + 1) + '. Used in potions and equipment.' })
+    $dataItems[id] = { id, name: 'Alchemy reagent ' + String(id).padStart(5, '0'), iconIndex: 64 + (id % 6),
+        description: 'A crafting material from region ' + (id % 12 + 1) + '. Used in potions and equipment.' }
 }
 for (let id = 2; id <= previewRecordCount; id++) {
     if (id > 4) {
@@ -195,8 +201,16 @@ for (let id = 2; id <= previewRecordCount; id++) {
         $gameSwitches._data[id] = id % 2 === 0
     }
     if (id > 2) $dataMapInfos[id] = { id, name: 'Region checkpoint ' + String(id).padStart(5, '0'), parentId: id % 3 === 0 ? 1 : 0 }
-    $dataWeapons.push({ id: id + 100, name: 'Tempered blade ' + String(id).padStart(5, '0'), iconIndex: 96, description: 'A balanced weapon forged for field expeditions.' })
-    $dataArmors.push({ id: id + 100, name: 'Expedition cloak ' + String(id).padStart(5, '0'), iconIndex: 128, description: 'Protective travel gear reinforced for long journeys.' })
+    $dataWeapons[id + 100] = { id: id + 100, name: 'Tempered blade ' + String(id).padStart(5, '0'), iconIndex: 96, description: 'A balanced weapon forged for field expeditions.' }
+    $dataArmors[id + 100] = { id: id + 100, name: 'Expedition cloak ' + String(id).padStart(5, '0'), iconIndex: 128, description: 'Protective travel gear reinforced for long journeys.' }
 }
+const hiddenVariableId = 4
+document.getElementById('preview-quest').addEventListener('click', () => {
+    const experience = $gameVariables.value(hiddenVariableId) + 30
+    $gameVariables.setValue(hiddenVariableId, experience)
+    $gameSwitches.setValue(2, !$gameSwitches.value(2))
+    $gameParty.gainItem($dataItems[1], 1)
+    document.getElementById('preview-feedback').textContent = 'Reward earned. Total quest EXP: ' + experience + '.'
+})
 // RPG Maker adds String.contains; the preview mirrors that engine extension.
 if (!String.prototype.contains) String.prototype.contains = String.prototype.includes

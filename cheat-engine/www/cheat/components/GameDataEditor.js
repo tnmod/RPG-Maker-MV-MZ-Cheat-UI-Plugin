@@ -5,7 +5,11 @@ import { ConfirmDialog } from '../js/DialogHelper.js'
 export default {
     name: 'GameDataEditor',
     components: { VirtualList },
-    props: { kind: { type: String, default: 'variables' } },
+    props: {
+        kind: { type: String, default: 'variables' },
+        recordIds: { type: Array, default: null },
+        canEdit: { type: Function, default: () => true }
+    },
 
     template: `
 <div class="cheat-data-page cheat-game-data-editor">
@@ -18,7 +22,7 @@ export default {
     <div class="cheat-filter-row">
         <label class="cheat-toggle"><input type="checkbox" v-model="hideUnnamed"><span>Hide unnamed</span></label>
         <span class="cheat-control-help">{{isSwitches ? 'Switches apply immediately.' : 'Press Enter or leave a value to apply it.'}}</span>
-        <button v-if="isSwitches" type="button" class="cheat-button cheat-button--quiet cheat-bulk-switches"
+        <button v-if="isSwitches && !recordIds" type="button" class="cheat-button cheat-button--quiet cheat-bulk-switches"
             :disabled="loading || !filteredItems.length" @click="confirmFilteredSwitches">Change filtered switches</button>
     </div>
     <div v-if="errorMessage || statusMessage" class="cheat-list-status" :class="{'cheat-inline-error': errorMessage}" :id="statusId"
@@ -156,7 +160,14 @@ export default {
             this.statusMessage = ''
             this.invalidId = null
             try {
-                const sourceNames = (this.isSwitches ? $dataSystem.switches : $dataSystem.variables).slice()
+                const databaseNames = this.isSwitches ? $dataSystem.switches : $dataSystem.variables
+                if (this.recordIds) {
+                    const store = this.store()
+                    this.items = this.canEdit() ? this.recordIds.filter(id => id > 0 && id < databaseNames.length)
+                        .map(id => this.rowFor(id, databaseNames[id], store.value(id))) : []
+                    return
+                }
+                const sourceNames = databaseNames.slice()
                 let names = sourceNames
                 const translate = this.isSwitches ? TRANSLATE_SETTINGS.isSwitchTranslateEnabled() : TRANSLATE_SETTINGS.isVariableTranslateEnabled()
                 if (translate) names = await TRANSLATOR.translateBulk(sourceNames.map(name => String(name || '')))
@@ -183,7 +194,7 @@ export default {
         },
 
         commitVariable (item) {
-            if (this.isSwitches || item.readOnly || this.items.indexOf(item) === -1) return
+            if (this.isSwitches || item.readOnly || this.items.indexOf(item) === -1 || !this.canEdit()) return
             // Recheck the live type: events may change a variable after the list
             // was loaded. Never overwrite an object or coerce a string to number.
             let store, current
@@ -234,7 +245,7 @@ export default {
         },
 
         toggleSwitch (item) {
-            if (!this.isSwitches || this.items.indexOf(item) === -1) return
+            if (!this.isSwitches || this.items.indexOf(item) === -1 || !this.canEdit()) return
             try {
                 const store = this.store()
                 const value = !store.value(item.id)

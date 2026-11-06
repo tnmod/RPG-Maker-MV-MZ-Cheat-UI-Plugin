@@ -6,14 +6,22 @@ import ConfirmDialog from './components/ConfirmDialog.js'
 import { customizeRPGMakerFunctions } from './init/customize_functions.js'
 import { isOverlayEditableTarget } from './js/OverlayInput.js'
 import { Key } from './js/KeyCodes.js'
+import { createRecording, recordingContext, sameRecordingGame } from './js/GameDataRecorder.js'
+
+const recordingSeconds = 60
 
 export default {
     name: 'MainComponent',
     components: { CheatModal, AlertSnackbar, ConfirmDialog },
     template: `
 <div class="cheat-workspace" @keydown.esc.capture="onOverlayEscape" @focusin="resetPressedKeys">
+    <div v-if="!show && recorder.active" class="cheat-launcher cheat-recorder-indicator" aria-label="Recording game data">
+        <span class="cheat-recorder-time">REC {{recorder.remaining}}s</span>
+        <button type="button" class="cheat-button" @click="finishRecording(true)">Stop</button>
+    </div>
+    <button v-else-if="!show && recorder.resultsPending" type="button" class="cheat-launcher" @click="openCheatModal('recorder-panel')">View results</button>
     <button
-        v-if="!show"
+        v-else-if="!show"
         ref="launcher"
         type="button"
         class="cheat-launcher"
@@ -30,6 +38,10 @@ export default {
         id="cheat-modal"
         ref="console"
         v-model="currentComponentName"
+        :recorder="recorder"
+        :can-edit-recording="canEditRecording"
+        @start-recording="startRecording"
+        @stop-recording="finishRecording(true)"
         @close="closeCheatModal">
     </cheat-modal>
     <alert-snackbar></alert-snackbar>
@@ -40,7 +52,8 @@ export default {
         return {
             currentKey: Key.createEmpty(),
             show: false,
-            currentComponentName: 'general-panel'
+            currentComponentName: 'general-panel',
+            recorder: { active: false, remaining: 0, results: null, resultsPending: false, message: '' }
         }
     },
 
@@ -60,7 +73,14 @@ export default {
         this._restoreGameInput = customizeRPGMakerFunctions(this)
     },
 
+    watch: {
+        currentComponentName (route) {
+            if (route === 'recorder-panel' && (this._recording || this._recordingContext)) this.canEditRecording()
+        }
+    },
+
     beforeDestroy () {
+        this.clearRecording()
         this.resetPressedKeys()
         window.removeEventListener('keydown', this.onGlobalKeyDown)
         window.removeEventListener('keyup', this.onGlobalKeyUp)
@@ -76,6 +96,61 @@ export default {
     },
 
     methods: {
+        startRecording () {
+            if (this.recorder.active) return
+            this.clearRecording()
+            this.recorder.message = ''
+            try {
+                this._recordingDeadline = performance.now() + recordingSeconds * 1000
+                this._recording = createRecording(recordingContext(), this._recordingDeadline)
+            } catch (error) {
+                this.recorder.message = 'Could not start recording. Return to the game and try again.'
+                return
+            }
+            this.recorder.remaining = recordingSeconds
+            this.recorder.active = true
+            this._recordingTimer = setInterval(this.updateRecording, 200)
+            this.closeCheatModal()
+        },
+
+        updateRecording () {
+            if (!this._recording) return
+            if (!this.canEditRecording()) return
+            this.recorder.remaining = Math.max(0, Math.ceil((this._recordingDeadline - performance.now()) / 1000))
+            if (this.recorder.remaining === 0) this.finishRecording(false)
+        },
+
+        finishRecording (openResults) {
+            if (!this._recording || !this.canEditRecording()) return
+            clearInterval(this._recordingTimer)
+            this._recordingContext = this._recording.context
+            this.recorder.results = this._recording.stop()
+            this._recording = null
+            this.recorder.active = false
+            this.recorder.resultsPending = !openResults
+            if (openResults) this.openCheatModal('recorder-panel')
+        },
+
+        clearRecording () {
+            clearInterval(this._recordingTimer)
+            if (this._recording) this._recording.stop()
+            this._recording = null
+            this._recordingContext = null
+            this.recorder.active = false
+            this.recorder.results = null
+            this.recorder.resultsPending = false
+        },
+
+        canEditRecording () {
+            const context = this._recording ? this._recording.context : this._recordingContext
+            if (!context) return false
+            const onTitle = typeof Scene_Title !== 'undefined' && SceneManager._scene instanceof Scene_Title
+            if (!onTitle && sameRecordingGame(context)) return true
+            this.clearRecording()
+            this.recorder.message = 'The game session changed. Start a new recording to inspect it.'
+            return false
+        },
+
         toggleShortcut () {
             return GLOBAL_SHORTCUT.getShortcut('toggleCheatModal').asDisplayString()
         },
@@ -126,7 +201,9 @@ export default {
         },
 
         openCheatModal (componentName = null) {
+            if (this._recordingContext || this._recording) this.canEditRecording()
             if (componentName) this.currentComponentName = componentName
+            if (this.currentComponentName === 'recorder-panel') this.recorder.resultsPending = false
             const opening = !this.show
             this.show = true
             if (opening) {

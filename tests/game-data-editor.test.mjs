@@ -22,7 +22,7 @@ function fixture ({ kind = 'variables', names = ['', 'Quest progress', 'Code', '
         'setTimeout', 'clearTimeout', source)({}, settings, translator, system, store, store,
         fn => { const id = ++timerId; timers.set(id, fn); return id },
         id => { canceled.push(id); timers.delete(id) })
-    const vm = { ...definition.data(), kind }
+    const vm = { ...definition.data(), kind, canEdit: () => true }
     for (const [name, method] of Object.entries(definition.methods)) vm[name] = method.bind(vm)
     for (const [name, getter] of Object.entries(definition.computed)) Object.defineProperty(vm, name, { get: () => getter.call(vm) })
     return { vm, definition, data, writes, system, timers, canceled }

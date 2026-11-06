@@ -9,6 +9,8 @@
         .preview-scene { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; color: #bac9dc; font: 16px "Segoe UI", sans-serif; background: radial-gradient(ellipse at 25% 30%, #314c52, transparent 55%), repeating-linear-gradient(0deg, #ffffff03 0, #ffffff03 1px, transparent 1px, transparent 48px), repeating-linear-gradient(90deg, #ffffff03 0, #ffffff03 1px, transparent 1px, transparent 48px), #14283b; }
         .preview-scene h1 { font-size: 36px; font-weight: 400; margin: 0 0 12px; color: #e2ebef; }
         .preview-scene p { margin: 0; max-width: 40ch; line-height: 1.6; }
+        .preview-scene button { justify-self: center; margin-top: 20px; padding: 8px 14px; border: 1px solid #586c81; border-radius: 6px; background: #25354e; color: #edf2f8; cursor: pointer; }
+        .preview-feedback { margin-top: 10px; font-size: 12px; min-height: 1.5em; }
         .preview-label { position: absolute; bottom: 20px; left: 24px; font-size: 12px; color: #d0dce9; }
     </style>
 </head>
@@ -16,6 +18,8 @@
     <main class="preview-scene" id="preview-game" tabindex="0">
         <h1>The adventure continues</h1>
         <p>Open Cheats to try the console with sample game data.</p>
+        <button id="preview-quest" type="button">Simulate quest reward</button>
+        <span id="preview-feedback" class="preview-feedback" role="status"></span>
         <span class="preview-label">UI preview with a mock engine. No game or save files are modified.</span>
     </main>
     <script src="mock-engine.js"></script>
