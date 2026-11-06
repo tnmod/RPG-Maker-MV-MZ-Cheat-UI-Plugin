@@ -4,7 +4,9 @@ This fork is updating the original cheat interface to make its existing tools ea
 
 - A visible **Cheats** launcher, a close button and a resizable-window-friendly console.
 - Grouped navigation with a **Find a tool** search field.
-- A redesigned General panel with explicit gold validation, movement controls and game-speed controls.
+- Five navigation entries: **Play**, **Inventory**, **Travel**, **Game data** and **Settings**. Inventory categories share a selector, and the other grouped tools use tabs. Direct shortcuts still open the intended tool.
+- One **Play** menu groups gold, party health and stats, movement and speed, combat, and save/session actions.
+- In-game icons beside item, weapon and armor names, loaded through the engine's IconSet bitmap (including encrypted assets).
 - Keyboard focus feedback and input isolation while interacting with the console.
 - Local styles and icon fonts, so opening the UI does not require a CDN connection.
 

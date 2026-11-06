@@ -4,15 +4,15 @@ export default {
     name: 'GeneralPanel',
 
     template: `
-<div class="cheat-general">
-    <div class="cheat-panel-toolbar">
+<div :class="section === 'all' ? 'cheat-general' : 'cheat-general-group'">
+    <div v-if="section === 'all'" class="cheat-panel-toolbar">
         <button type="button" class="cheat-button cheat-button--quiet" @click="initializeVariables">Refresh values</button>
         <span class="cheat-inline-status" role="status" aria-live="polite">{{statusMessage}}</span>
     </div>
 
-    <section class="cheat-control-section" aria-labelledby="cheat-gold-heading">
+    <section v-if="section === 'all' || section === 'gold'" class="cheat-control-section" aria-label="Gold amount">
         <div class="cheat-control-heading">
-            <h3 id="cheat-gold-heading">Gold</h3>
+            <h3 v-if="section === 'all'" id="cheat-gold-heading">Gold</h3>
             <span class="cheat-current-value">Current <strong>{{formattedGold}}</strong></span>
         </div>
         <form class="cheat-gold-form" @submit.prevent="onGoldChange">
@@ -26,10 +26,11 @@ export default {
             </div>
             <p v-if="goldError" id="cheat-gold-error" class="cheat-inline-error" role="alert">{{goldError}}</p>
             <p v-else id="cheat-gold-help" class="cheat-control-help">Enter the total gold you want to carry.</p>
+            <p v-if="section !== 'all' && statusMessage" class="cheat-inline-status" role="status" aria-live="polite">{{statusMessage}}</p>
         </form>
     </section>
 
-    <section class="cheat-control-section" aria-labelledby="cheat-movement-heading">
+    <section v-if="section === 'all' || section === 'movement'" class="cheat-control-section" aria-labelledby="cheat-movement-heading">
         <div class="cheat-control-heading">
             <h3 id="cheat-movement-heading">Movement</h3>
             <output for="cheat-move-speed" class="cheat-value-badge">{{speed.toFixed(1)}}</output>
@@ -52,7 +53,7 @@ export default {
         </label>
     </section>
 
-    <section class="cheat-control-section" aria-labelledby="cheat-game-speed-heading">
+    <section v-if="section === 'all' || section === 'movement'" class="cheat-control-section" aria-labelledby="cheat-game-speed-heading">
         <div class="cheat-control-heading">
             <h3 id="cheat-game-speed-heading">Game speed</h3>
             <div class="cheat-control-heading__actions">
@@ -81,8 +82,8 @@ export default {
         </fieldset>
     </section>
 
-    <section class="cheat-control-section cheat-control-section--last" aria-labelledby="cheat-quick-actions-heading">
-        <div class="cheat-control-heading"><h3 id="cheat-quick-actions-heading">Quick actions</h3></div>
+    <section v-if="section === 'all' || section === 'session'" class="cheat-control-section cheat-control-section--last" aria-label="Save and session actions">
+        <div v-if="section === 'all'" class="cheat-control-heading"><h3 id="cheat-quick-actions-heading">Quick actions</h3></div>
         <div class="cheat-quick-actions">
             <button type="button" class="cheat-button" @click="toggleSaveScene">Open save</button>
             <button type="button" class="cheat-button" @click="toggleLoadScene">Open load</button>
@@ -90,6 +91,8 @@ export default {
         </div>
     </section>
 </div>`,
+
+    props: { section: { type: String, default: 'all' } },
 
     data () {
         return {

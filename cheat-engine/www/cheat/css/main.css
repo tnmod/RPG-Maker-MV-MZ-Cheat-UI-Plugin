@@ -72,9 +72,9 @@
     display: flex;
     flex-direction: column;
     width: calc(100vw - 32px);
-    max-width: 960px;
+    max-width: 1280px;
     height: calc(100vh - 32px);
-    max-height: 720px;
+    max-height: none;
     overflow: hidden;
     border: 1px solid var(--cheat-border);
     border-radius: 12px;
@@ -149,12 +149,19 @@
 }
 #rpg-cheat-app .cheat-nav-button:hover { color: var(--cheat-text); background: #25354e; }
 #rpg-cheat-app .cheat-nav-button.is-active { color: var(--cheat-accent); border-color: #5d594e; background: #eac68412; font-weight: 600; }
+#rpg-cheat-app .cheat-nav-groups > .cheat-nav-button { padding-top: 11px; padding-bottom: 11px; }
+#rpg-cheat-app .cheat-nav-groups > .cheat-nav-button--settings { margin-top: 22px; }
 #rpg-cheat-app .cheat-nav-empty { padding: 8px; color: var(--cheat-muted); font-size: 13px; }
 #rpg-cheat-app .cheat-console__content { flex: 1 1 auto; min-width: 0; overflow-y: auto; padding: 22px 24px; }
 #rpg-cheat-app .cheat-section-header { margin-bottom: 22px; }
 #rpg-cheat-app .cheat-section-header h2 { margin: 0 0 3px; color: var(--cheat-text); font-size: 23px; letter-spacing: -.5px; font-weight: 600; }
 #rpg-cheat-app .cheat-section-header p { margin: 0; color: var(--cheat-muted); font-size: 13px; max-width: 62ch; }
 #rpg-cheat-app .cheat-section-body { min-width: 0; }
+#rpg-cheat-app .cheat-tool-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--cheat-border); }
+#rpg-cheat-app .cheat-tool-tab { padding: 8px 12px; border: 1px solid transparent; border-radius: 6px; color: var(--cheat-muted); background: transparent; font-size: 13px; font-weight: 500; }
+#rpg-cheat-app .cheat-tool-tab:hover { color: var(--cheat-text); background: var(--cheat-surface); }
+#rpg-cheat-app .cheat-tool-tab.is-active { color: var(--cheat-accent); border-color: #5d594e; background: #eac68412; }
+#rpg-cheat-app .cheat-tool-panel { min-width: 0; }
 #rpg-cheat-app .cheat-console__footer { display: flex; justify-content: space-between; gap: 12px; padding: 9px 20px; border-top: 1px solid var(--cheat-border); color: var(--cheat-muted); font-size: 11px; }
 #rpg-cheat-app .cheat-console__footer kbd { color: var(--cheat-text); padding: 1px 4px; border: 1px solid var(--cheat-border); border-radius: 3px; }
 #rpg-cheat-app .cheat-session-state { display: inline-flex; align-items: center; gap: 7px; }
@@ -237,7 +244,145 @@
 #rpg-cheat-app .cheat-segmented label.is-active { border-color: var(--cheat-border); background: var(--cheat-surface); color: var(--cheat-text); }
 #rpg-cheat-app .cheat-segmented input { width: 13px; height: 13px; appearance: auto; accent-color: var(--cheat-accent); }
 
-/* Integrate the existing Vuetify tools with the console. */
+/* Play combines related tools in one page; details keep the overview compact. */
+#rpg-cheat-app .cheat-play > .cheat-panel-toolbar { justify-content: space-between; margin-bottom: 14px; }
+#rpg-cheat-app .cheat-play > .cheat-panel-toolbar .cheat-control-help { margin: 0; }
+#rpg-cheat-app .cheat-play-group { margin: 0 0 10px; border: 1px solid var(--cheat-border); border-radius: 8px; background: var(--cheat-bg); overflow: hidden; }
+#rpg-cheat-app .cheat-play-group__summary { position: relative; display: flex; flex-wrap: wrap; align-items: center; padding: 14px 42px 14px 16px; cursor: pointer; list-style: none; }
+#rpg-cheat-app .cheat-play-group__summary::-webkit-details-marker { display: none; }
+#rpg-cheat-app .cheat-play-group__summary:hover { background: var(--cheat-surface); }
+#rpg-cheat-app .cheat-play-group__summary:focus { outline: 2px solid var(--cheat-accent); outline-offset: -3px; }
+#rpg-cheat-app .cheat-play-group__title { color: var(--cheat-text); font-weight: 600; font-size: 14px; }
+#rpg-cheat-app .cheat-play-group__description { flex-basis: 100%; color: var(--cheat-muted); font-size: 12px; margin-top: 2px; }
+#rpg-cheat-app .cheat-play-group__chevron { position: absolute; top: 18px; right: 16px; color: var(--cheat-muted); font-size: 20px; line-height: 1; }
+#rpg-cheat-app .cheat-play-group[open] > summary { border-bottom: 1px solid var(--cheat-border); }
+#rpg-cheat-app .cheat-play-group[open] > summary .cheat-play-group__chevron { transform: rotate(180deg); }
+#rpg-cheat-app .cheat-play-group__body { padding: 16px; }
+#rpg-cheat-app .cheat-general-group > .cheat-control-section:first-child { border-top: 0; padding-top: 0; }
+#rpg-cheat-app .cheat-general-group > .cheat-control-section:last-child { padding-bottom: 0; }
+#rpg-cheat-app .cheat-play-group__body .cheat-gold-form .cheat-input-row { max-width: none; }
+#rpg-cheat-app .cheat-play-group__body .cheat-number-input { max-width: none; }
+#rpg-cheat-app .cheat-field-grid,
+#rpg-cheat-app .cheat-party-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-gap: 12px; }
+#rpg-cheat-app .cheat-field,
+#rpg-cheat-app .cheat-party-field { display: flex; flex-direction: column; min-width: 0; font-size: 12px; color: var(--cheat-muted); }
+#rpg-cheat-app .cheat-field > label,
+#rpg-cheat-app .cheat-party-field > label { margin-bottom: 5px; }
+#rpg-cheat-app .cheat-party-selector { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; color: var(--cheat-muted); font-size: 12px; }
+#rpg-cheat-app .cheat-party-selector select { width: 100%; padding: 8px 10px; border: 1px solid var(--cheat-border); border-radius: 6px; color: var(--cheat-text); background: var(--cheat-inset); appearance: auto; }
+#rpg-cheat-app .cheat-party-selector > label { align-self: flex-start; margin: 0; }
+#rpg-cheat-app .cheat-party-selector > button { align-self: flex-end; }
+#rpg-cheat-app .cheat-party-subheading { margin: 20px 0 10px; font-size: 13px; font-weight: 600; color: var(--cheat-text); }
+#rpg-cheat-app .cheat-party-fields--stats,
+#rpg-cheat-app .cheat-party-fields--progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#rpg-cheat-app .cheat-party-group > .cheat-quick-actions { margin-top: 14px; }
+#rpg-cheat-app .cheat-combat-section + .cheat-combat-section { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--cheat-border); }
+#rpg-cheat-app .cheat-combat-section h4 { margin-bottom: 10px; color: var(--cheat-text); font-size: 13px; }
+#rpg-cheat-app .cheat-combat-section .cheat-toggle { margin: 0 0 12px; }
+#rpg-cheat-app .cheat-combat-enemy { margin-top: 14px; padding: 12px; border: 1px solid var(--cheat-border); border-radius: 6px; }
+#rpg-cheat-app .cheat-combat-enemy h4 { margin-bottom: 10px; font-size: 13px; font-weight: 500; color: var(--cheat-text); }
+
+/* Fill-height workspaces: tabs and tools stay in place; only records scroll. */
+#rpg-cheat-app .cheat-window-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--cheat-border); border-radius: 6px; color: var(--cheat-muted); background: transparent; }
+#rpg-cheat-app .cheat-window-button:hover { color: var(--cheat-text); background: var(--cheat-surface); }
+#rpg-cheat-app .cheat-console.cheat-console--maximized { top: 0; right: 0; width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; border: 0; }
+#rpg-cheat-app .cheat-console__content.cheat-console__content--workspace { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+#rpg-cheat-app .cheat-console__content--workspace > .cheat-section-header { flex: 0 0 auto; margin-bottom: 14px; }
+#rpg-cheat-app .cheat-console__content--workspace > .cheat-section-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#rpg-cheat-app .cheat-grouped-tools { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#rpg-cheat-app .cheat-tool-tabs { flex: 0 0 auto; margin-bottom: 14px; }
+#rpg-cheat-app .cheat-tool-panel, #rpg-cheat-app .cheat-data-host { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#rpg-cheat-app .cheat-data-page { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: hidden; }
+#rpg-cheat-app .cheat-data-toolbar { display: flex; flex: 0 0 auto; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
+#rpg-cheat-app .cheat-search { flex: 1 1 160px; min-width: 100px; color: var(--cheat-muted); font-size: 12px; }
+#rpg-cheat-app label.cheat-search { display: flex; flex-direction: column; gap: 5px; }
+#rpg-cheat-app input.cheat-search, #rpg-cheat-app .cheat-search input { width: 100%; height: 38px; padding: 8px 12px; border: 1px solid var(--cheat-border); border-radius: 6px; background: var(--cheat-inset); color: var(--cheat-text); font-size: 13px; }
+#rpg-cheat-app input.cheat-search::placeholder, #rpg-cheat-app .cheat-search input::placeholder { color: #9baac2; }
+#rpg-cheat-app .cheat-result-count { flex: 0 0 auto; align-self: center; color: var(--cheat-muted); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#rpg-cheat-app .cheat-filter-row { display: flex; flex-wrap: wrap; flex: 0 0 auto; align-items: center; gap: 10px 16px; min-height: 44px; padding: 8px 0; }
+#rpg-cheat-app .cheat-filter-row .cheat-toggle { margin: 0; }
+#rpg-cheat-app .cheat-filter-row .cheat-control-help { margin: 0; }
+#rpg-cheat-app .cheat-map-filters > button { margin-left: auto; }
+#rpg-cheat-app .cheat-filter-check { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--cheat-muted); cursor: pointer; white-space: nowrap; }
+#rpg-cheat-app .cheat-filter-check input { appearance: auto; width: 15px; height: 15px; accent-color: var(--cheat-accent); }
+#rpg-cheat-app .cheat-sort { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--cheat-muted); font-size: 12px; }
+#rpg-cheat-app .cheat-sort select { appearance: auto; max-width: 160px; padding: 5px 8px; border: 1px solid var(--cheat-border); border-radius: 5px; background: var(--cheat-bg); color: var(--cheat-text); font-size: 12px; }
+#rpg-cheat-app .cheat-inventory-selects { flex-shrink: 0; }
+#rpg-cheat-app .cheat-inventory-selects select + select { margin-left: 4px; }
+#rpg-cheat-app .cheat-list-status { flex: 0 0 auto; margin: 0 0 8px; color: var(--cheat-muted); font-size: 12px; line-height: 1.4; overflow-wrap: break-word; }
+#rpg-cheat-app .cheat-list-status.cheat-inline-error { color: #ffb4ab; }
+#rpg-cheat-app .cheat-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+#rpg-cheat-app .cheat-inventory-header, #rpg-cheat-app .cheat-inventory-row { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(130px, 1.15fr) 84px; grid-column-gap: 18px; align-items: center; padding: 0 12px; }
+#rpg-cheat-app .cheat-inventory-header, #rpg-cheat-app .cheat-state-header, #rpg-cheat-app .cheat-shortcut-header { flex: 0 0 auto; min-height: 34px; color: var(--cheat-muted); font-size: 11px; border-top: 1px solid var(--cheat-border); border-bottom: 1px solid var(--cheat-border); }
+#rpg-cheat-app .cheat-inventory-header > :last-child { text-align: right; }
+#rpg-cheat-app .cheat-virtual-list { position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; overflow-anchor: none; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--cheat-bg); outline-offset: -2px; }
+#rpg-cheat-app .cheat-virtual-list__row { border-bottom: 1px solid #40516d88; }
+#rpg-cheat-app .cheat-virtual-list__row:hover { background: #25354e88; }
+#rpg-cheat-app .cheat-inventory-row, #rpg-cheat-app .cheat-state-row, #rpg-cheat-app .cheat-bookmark-row, #rpg-cheat-app .cheat-map-row, #rpg-cheat-app .cheat-shortcut-row { height: 100%; min-width: 0; }
+#rpg-cheat-app .cheat-row-title { min-width: 0; display: flex; align-items: center; }
+#rpg-cheat-app .cheat-row-copy { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
+#rpg-cheat-app .cheat-row-name, #rpg-cheat-app .cheat-record-name { display: block; color: var(--cheat-text); font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#rpg-cheat-app .cheat-row-meta { display: block; min-width: 0; font-size: 11px; color: var(--cheat-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#rpg-cheat-app .cheat-row-meta > span { display: inline; }
+#rpg-cheat-app .cheat-row-description { margin: 0; color: var(--cheat-muted); font-size: 12px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+#rpg-cheat-app .cheat-row-description--compact { display: none; }
+#rpg-cheat-app .cheat-row-number { width: 100%; max-width: none; min-width: 0; height: 34px; padding: 6px 8px; border: 1px solid var(--cheat-border); border-radius: 5px; background: var(--cheat-inset); color: var(--cheat-text); font-size: 13px; font-variant-numeric: tabular-nums; }
+#rpg-cheat-app .cheat-inventory-row .cheat-row-number { text-align: right; }
+#rpg-cheat-app [aria-invalid="true"] { border-color: #ffb4ab !important; }
+#rpg-cheat-app .cheat-page-status { flex: 0 0 auto; min-height: 30px; margin: 0; padding: 8px 0 0; border-top: 1px solid var(--cheat-border); color: var(--cheat-muted); font-size: 11px; line-height: 1.4; }
+#rpg-cheat-app .cheat-page-status.is-error, #rpg-cheat-app .cheat-page-status.has-error, #rpg-cheat-app .cheat-page-status.cheat-inline-error { color: #ffb4ab; }
+#rpg-cheat-app .cheat-list-empty { display: flex; align-items: center; justify-content: center; min-height: 160px; height: 100%; padding: 24px; text-align: center; color: var(--cheat-muted); font-size: 13px; }
+#rpg-cheat-app .cheat-state-header, #rpg-cheat-app .cheat-state-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px; grid-column-gap: 18px; align-items: center; padding: 0 12px; }
+#rpg-cheat-app .cheat-state-header > :last-child { text-align: right; }
+#rpg-cheat-app .cheat-state-row .cheat-row-title { flex-direction: column; align-items: flex-start; gap: 3px; overflow: hidden; }
+#rpg-cheat-app .cheat-state-row .cheat-row-value { text-align: right; }
+#rpg-cheat-app .cheat-switch { justify-self: end; display: inline-flex; align-items: center; gap: 8px; min-width: 80px; padding: 7px 9px; border: 1px solid var(--cheat-border); border-radius: 5px; color: var(--cheat-muted); background: var(--cheat-inset); font-size: 12px; }
+#rpg-cheat-app .cheat-switch__track { width: 23px; height: 13px; border-radius: 9px; background: #66748a; position: relative; }
+#rpg-cheat-app .cheat-switch__track::after { content: ''; position: absolute; width: 9px; height: 9px; left: 2px; top: 2px; border-radius: 50%; background: var(--cheat-text); }
+#rpg-cheat-app .cheat-switch.is-on { color: var(--cheat-accent); border-color: #716c5d; }
+#rpg-cheat-app .cheat-switch.is-on .cheat-switch__track { background: var(--cheat-accent); }
+#rpg-cheat-app .cheat-switch.is-on .cheat-switch__track::after { left: 12px; background: var(--cheat-inset); }
+#rpg-cheat-app .cheat-value-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; font-size: 12px; color: var(--cheat-muted); }
+#rpg-cheat-app .cheat-value-preview small { display: block; font-size: 10px; }
+#rpg-cheat-app .cheat-travel-form { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) auto; align-items: end; grid-gap: 10px; flex: 0 0 auto; padding: 0 0 16px; margin-bottom: 16px; border-bottom: 1px solid var(--cheat-border); }
+#rpg-cheat-app .cheat-travel-context { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding-bottom: 5px; }
+#rpg-cheat-app .cheat-travel-context strong { font-size: 12px; font-weight: 600; }
+#rpg-cheat-app .cheat-travel-context > span { font-size: 11px; color: var(--cheat-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#rpg-cheat-app .cheat-travel-context .cheat-row-meta { display: inline; }
+#rpg-cheat-app .cheat-coordinate-fields { grid-template-columns: minmax(140px, 1fr) 80px 80px; }
+#rpg-cheat-app .cheat-coordinate-field { display: flex; flex-direction: column; gap: 5px; color: var(--cheat-muted); font-size: 12px; }
+#rpg-cheat-app .cheat-coordinate-field input { max-width: none; width: 100%; }
+#rpg-cheat-app .cheat-bookmark-row, #rpg-cheat-app .cheat-map-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px; }
+#rpg-cheat-app .cheat-bookmark-row .cheat-row-title, #rpg-cheat-app .cheat-map-row .cheat-row-title { flex: 1; flex-direction: column; align-items: flex-start; gap: 4px; overflow: hidden; }
+#rpg-cheat-app .cheat-bookmark-row strong, #rpg-cheat-app .cheat-map-row strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; font-size: 13px; }
+#rpg-cheat-app .cheat-row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+#rpg-cheat-app .cheat-shortcut-header, #rpg-cheat-app .cheat-shortcut-row { display: grid; grid-template-columns: minmax(100px, 1fr) 210px 70px; align-items: center; grid-gap: 14px; padding: 0 12px; }
+#rpg-cheat-app .cheat-key-input { width: 100%; min-width: 0; height: 34px; padding: 6px 9px; border: 1px solid var(--cheat-border); border-radius: 5px; color: var(--cheat-text); background: var(--cheat-inset); font-size: 12px; }
+#rpg-cheat-app .cheat-binding-control { display: flex; gap: 5px; min-width: 0; }
+#rpg-cheat-app .cheat-icon-button { flex: 0 0 28px; width: 28px; height: 34px; border: 1px solid var(--cheat-border); border-radius: 5px; color: var(--cheat-muted); background: transparent; font-size: 20px; }
+#rpg-cheat-app .cheat-key-filter { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--cheat-muted); }
+#rpg-cheat-app .cheat-key-filter input { width: 130px; }
+#rpg-cheat-app .cheat-shortcut-inspector { flex: 0 0 auto; max-height: 180px; margin-bottom: 8px; padding: 12px; border: 1px solid var(--cheat-border); border-radius: 6px; overflow-y: auto; background: var(--cheat-surface); }
+#rpg-cheat-app .cheat-shortcut-inspector h3 { font-size: 13px; }
+#rpg-cheat-app .cheat-settings-page { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 8px; }
+#rpg-cheat-app .cheat-settings-section { display: grid; grid-template-columns: minmax(140px, .8fr) minmax(0, 1.3fr); grid-gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--cheat-border); }
+#rpg-cheat-app .cheat-settings-section:first-child { padding-top: 0; }
+#rpg-cheat-app .cheat-settings-copy h3 { margin-bottom: 6px; color: var(--cheat-text); font-size: 14px; font-weight: 600; }
+#rpg-cheat-app .cheat-settings-copy p, #rpg-cheat-app .cheat-settings-copy a { color: var(--cheat-muted); font-size: 12px; line-height: 1.6; }
+#rpg-cheat-app .cheat-settings-copy a { color: var(--cheat-accent); }
+#rpg-cheat-app .cheat-settings-controls { min-width: 0; }
+#rpg-cheat-app .cheat-settings-controls > .cheat-toggle:first-child { margin-top: 0; }
+#rpg-cheat-app .cheat-settings-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-gap: 14px; }
+#rpg-cheat-app .cheat-settings-field { display: flex; flex-direction: column; min-width: 0; gap: 6px; margin: 0 0 14px; color: var(--cheat-muted); font-size: 12px; }
+#rpg-cheat-app .cheat-settings-field input, #rpg-cheat-app .cheat-settings-field select, #rpg-cheat-app .cheat-settings-field textarea { width: 100%; max-width: none; appearance: auto; }
+#rpg-cheat-app .cheat-settings-field textarea { min-height: 90px; resize: vertical; }
+#rpg-cheat-app .cheat-settings-field small { color: var(--cheat-muted); font-size: 11px; line-height: 1.5; }
+#rpg-cheat-app .cheat-service-fields { grid-template-columns: 76px minmax(0, 1fr); }
+#rpg-cheat-app .cheat-settings-checks { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+#rpg-cheat-app .cheat-connection-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+#rpg-cheat-app .cheat-connection-state { flex: 1 1 140px; font-size: 12px; color: var(--cheat-muted); }
+
+/* Integrate the remaining Vuetify dialogs with the console. */
 #rpg-cheat-app .theme--dark.v-card,
 #rpg-cheat-app .theme--dark.v-data-table,
 #rpg-cheat-app .theme--dark.v-tabs-items,
@@ -249,6 +394,10 @@
 #rpg-cheat-app .v-card__subtitle, #rpg-cheat-app .v-card__text { color: var(--cheat-muted); }
 #rpg-cheat-app .v-data-table th { white-space: nowrap; }
 #rpg-cheat-app .v-data-table td { font-variant-numeric: tabular-nums; }
+#rpg-cheat-app .cheat-inventory-name { display: flex; align-items: center; min-height: 44px; }
+#rpg-cheat-app .cheat-game-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; margin-right: 10px; }
+#rpg-cheat-app .cheat-game-icon canvas { display: block; width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
+#rpg-cheat-app .cheat-game-icon__placeholder { color: var(--cheat-muted); opacity: .45; font-size: 20px; }
 #rpg-cheat-app .v-tab { text-transform: none; letter-spacing: normal; }
 #rpg-cheat-app .v-menu__content,
 #rpg-cheat-app .v-dialog__content--active,
@@ -272,6 +421,9 @@
 @media (min-width: 900px) {
     #rpg-cheat-app .cheat-general { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
     #rpg-cheat-app .cheat-panel-toolbar { grid-column: 1 / -1; }
+    #rpg-cheat-app .cheat-play-group__summary { min-height: 52px; padding-top: 12px; padding-bottom: 12px; }
+    #rpg-cheat-app .cheat-play-group__title { min-width: 144px; }
+    #rpg-cheat-app .cheat-play-group__description { flex: 1; margin: 0 0 0 18px; }
 }
 
 /* NW.js 0.26 uses Chromium 62, before flex gap and :focus-visible. */
@@ -282,6 +434,7 @@
     #rpg-cheat-app .cheat-toggle > * + *,
     #rpg-cheat-app .cheat-launcher > * + * { margin-left: 10px; }
     #rpg-cheat-app .cheat-quick-actions > * { margin: 0 8px 8px 0; }
+    #rpg-cheat-app .cheat-tool-tab { margin-right: 6px; }
     #rpg-cheat-app .cheat-range-row input { margin: 0 12px; }
     #rpg-cheat-app .cheat-session-state > * { margin-right: 7px; }
 }
@@ -297,6 +450,18 @@
     #rpg-cheat-app .cheat-console__content { padding: 18px 16px; }
     #rpg-cheat-app .cheat-nav-button { padding: 7px; font-size: 12px; }
     #rpg-cheat-app .cheat-console__footer > :last-child { display: none; }
+    #rpg-cheat-app .cheat-inventory-header, #rpg-cheat-app .cheat-inventory-row { grid-template-columns: minmax(0, 1fr) 74px; grid-column-gap: 10px; }
+    #rpg-cheat-app .cheat-inventory-header > :nth-child(2), #rpg-cheat-app .cheat-inventory-row > .cheat-row-description { display: none; }
+    #rpg-cheat-app .cheat-row-description--compact { display: block; color: var(--cheat-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #rpg-cheat-app .cheat-state-header, #rpg-cheat-app .cheat-state-row { grid-template-columns: minmax(0, 1fr) 112px; grid-column-gap: 12px; }
+    #rpg-cheat-app .cheat-settings-section { grid-template-columns: minmax(0, 1fr); grid-gap: 12px; }
+    #rpg-cheat-app .cheat-shortcut-header { display: none; }
+    #rpg-cheat-app .cheat-shortcut-row { grid-template-columns: minmax(0, 1fr) 64px; grid-template-rows: 24px 34px; grid-gap: 3px 8px; padding: 6px 10px; }
+    #rpg-cheat-app .cheat-shortcut-row > .cheat-row-copy { grid-column: 1 / -1; }
+    #rpg-cheat-app .cheat-shortcut-row .cheat-row-meta { display: none; }
+    #rpg-cheat-app .cheat-travel-form { grid-template-columns: minmax(0, 1fr) auto; }
+    #rpg-cheat-app .cheat-travel-context { grid-column: 1 / -1; }
+    #rpg-cheat-app .cheat-coordinate-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 480px) {
     #rpg-cheat-app .cheat-console { top: 6px; right: 6px; width: calc(100vw - 12px); height: calc(100vh - 12px); border-radius: 9px; }
@@ -309,12 +474,45 @@
     #rpg-cheat-app .cheat-nav-group { display: inline; }
     #rpg-cheat-app .cheat-nav-group__title { display: none; }
     #rpg-cheat-app .cheat-nav-button { display: inline-flex; width: auto; margin: 2px 3px 2px 0; padding: 5px 9px; }
+    #rpg-cheat-app .cheat-nav-groups > .cheat-nav-button { padding-top: 5px; padding-bottom: 5px; margin-top: 2px; }
+    #rpg-cheat-app .cheat-console__sidebar .cheat-nav-groups { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 2px 0; }
+    #rpg-cheat-app .cheat-console__sidebar .cheat-nav-button { flex: 0 0 auto; white-space: nowrap; }
     #rpg-cheat-app .cheat-console__content { padding: 16px; }
     #rpg-cheat-app .cheat-section-header { margin-bottom: 18px; }
     #rpg-cheat-app .cheat-section-header h2 { font-size: 21px; }
     #rpg-cheat-app .cheat-console__footer { padding: 7px 12px; }
     #rpg-cheat-app .cheat-control-row { gap: 8px; }
     #rpg-cheat-app .cheat-launcher { top: 10px; right: 10px; }
+    #rpg-cheat-app .cheat-play-group__summary { padding-left: 12px; }
+    #rpg-cheat-app .cheat-play-group__body { padding: 12px; }
+    #rpg-cheat-app .cheat-field-grid, #rpg-cheat-app .cheat-party-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #rpg-cheat-app .cheat-console__content--workspace { padding: 12px; }
+    #rpg-cheat-app .cheat-console__content--workspace > .cheat-section-header { margin-bottom: 10px; }
+    #rpg-cheat-app .cheat-console__content--workspace > .cheat-section-header h2 { font-size: 19px; }
+    #rpg-cheat-app .cheat-console__content--workspace > .cheat-section-header p { display: none; }
+    #rpg-cheat-app .cheat-tool-tabs { gap: 3px; margin-bottom: 10px; padding-bottom: 7px; }
+    #rpg-cheat-app .cheat-tool-tab { padding: 6px 9px; font-size: 12px; }
+    #rpg-cheat-app .cheat-data-toolbar { gap: 7px; }
+    #rpg-cheat-app .cheat-data-toolbar > input.cheat-search { flex-basis: 130px; }
+    #rpg-cheat-app .cheat-data-toolbar > .cheat-button { padding: 6px 8px; }
+    #rpg-cheat-app .cheat-filter-row { flex-wrap: nowrap; overflow-x: auto; gap: 12px; min-height: 40px; }
+    #rpg-cheat-app .cheat-filter-row > * { flex-shrink: 0; }
+    #rpg-cheat-app .cheat-filter-row > .cheat-control-help { display: none; }
+    #rpg-cheat-app .cheat-inventory-filters, #rpg-cheat-app .cheat-map-filters { flex-wrap: wrap; overflow: visible; gap: 6px 12px; }
+    #rpg-cheat-app .cheat-shortcuts-page .cheat-data-toolbar > .cheat-result-count { display: none; }
+    #rpg-cheat-app .cheat-bookmark-row, #rpg-cheat-app .cheat-map-row { padding: 0 8px; gap: 8px; }
+    #rpg-cheat-app .cheat-row-actions .cheat-button { padding-left: 7px; padding-right: 7px; font-size: 11px; }
+    #rpg-cheat-app .cheat-settings-fields { grid-template-columns: minmax(0, 1fr); }
+    #rpg-cheat-app .cheat-service-fields { grid-template-columns: 76px minmax(0, 1fr); }
+}
+@media (max-height: 500px) {
+    #rpg-cheat-app .cheat-console__header { min-height: 48px; padding-top: 6px; padding-bottom: 6px; }
+    #rpg-cheat-app .cheat-console__content.cheat-console__content--workspace { overflow-y: auto; padding-top: 10px; }
+    #rpg-cheat-app .cheat-console__content--workspace .cheat-section-header p { display: none; }
+    #rpg-cheat-app .cheat-console__content--workspace > .cheat-section-body { flex: 1 0 auto; }
+    #rpg-cheat-app .cheat-data-page { overflow: visible; }
+    #rpg-cheat-app .cheat-virtual-list { flex-basis: 124px; min-height: 124px; }
+    #rpg-cheat-app .cheat-settings-page { min-height: 140px; }
 }
 @media (prefers-reduced-motion: reduce) {
     #rpg-cheat-app *, #rpg-cheat-app *::before, #rpg-cheat-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

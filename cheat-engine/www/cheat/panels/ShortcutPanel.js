@@ -1,283 +1,126 @@
-import KeyInputField from '../components/KeyInputField.js'
+import VirtualList from '../components/VirtualList.js'
 import { GLOBAL_SHORTCUT } from '../js/GlobalShortcut.js'
-import {Key} from '../js/KeyCodes.js'
-import {Alert} from '../js/AlertHelper.js'
+import { Key } from '../js/KeyCodes.js'
 
 export default {
     name: 'ShortcutPanel',
-
-    components: {
-        KeyInputField
-    },
-
+    components: { VirtualList },
     template: `
-<v-card flat class="ma-0 pa-0">
-    <v-row>
-        <v-col
-            cols="12"
-            md="8">
-            <v-text-field
-                label="Search..."
-                solo
-                background-color="grey darken-3"
-                v-model="search"
-                dense
-                hide-details
-                @keydown.self.stop
-                @input="onSearchChange"
-                @focus="$event.target.select()">
-            </v-text-field>
-        </v-col>
-        <v-col
-            cols="12"
-            md="4">
-            <key-input-field
-                v-model="shortcutSearch"
-                label="Shortcut"
-                solo
-                dense
-                background-color="grey darken-3"
-                hide-details
-                combining-key-alone
-                @change="onShortcutSearchChange">
-            </key-input-field>
-        </v-col>
-    </v-row>
-    <v-card-text
-        class="pa-0 d-flex justify-space-between align-center">
-        <v-checkbox
-            class="d-inline-flex"
-            v-model="hideDesc"
-            label="Hide Description Field">
-        </v-checkbox>
-        <v-tooltip
-            bottom>
-            <span>Restore to default settings</span>
-            <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                    color="green"
-                    v-bind="attrs"
-                    v-on="on"
-                    x-small
-                    fab
-                    @click="restoreToDefault">
-                    <v-icon small>mdi-restore</v-icon>
-                </v-btn>
-            </template>
-        </v-tooltip>
-    </v-card-text>
-    <v-data-table
-        class="mt-2"
-        denses
-        single-expand
-        :headers="filteredHeaders"
-        :expanded.sync="tableExpanded"
-        :items="filteredShortcuts"
-        :search="search"
-        :custom-filter="tableItemFilter"
-        :items-per-page="5">
-        <template
-            v-slot:item.shortcut="{ item }">
-            <key-input-field
-                style="width: 170px;"
-                v-model="item.shortcut"
-                :deletable="!item.necessary"
-                label="No Shortcut"
-                solo
-                dense
-                background-color="grey darken-3"
-                :combining-key-alone="item.combiningKeyAlone"
-                hide-details
-                @change="onShortcutChange($event, item)">
-            </key-input-field>
+<div class="cheat-data-page cheat-shortcuts-page">
+    <div class="cheat-data-toolbar">
+        <input class="cheat-search" type="search" v-model="search" aria-label="Search shortcuts"
+            placeholder="Search actions or key bindings…" @input="onSearchChange">
+        <span class="cheat-result-count">{{filteredShortcuts.length}} actions</span>
+        <button type="button" class="cheat-button" @click="restoreToDefault">Restore defaults</button>
+    </div>
+    <div class="cheat-filter-row">
+        <label class="cheat-key-filter">Filter by key
+            <input class="cheat-key-input" readonly :value="shortcutSearch.asDisplayString()" placeholder="Press a key…"
+                aria-label="Filter by shortcut" @keydown="onFilterKeydown">
+        </label>
+        <button v-if="!shortcutSearch.isEmpty()" type="button" class="cheat-button cheat-button--quiet" @click="clearKeyFilter">Clear key filter</button>
+        <span class="cheat-control-help">Select a binding and press your new shortcut.</span>
+    </div>
+    <div v-if="errorMessage || statusMessage" class="cheat-list-status" :class="{'cheat-inline-error': !!errorMessage}"
+        :role="errorMessage ? 'alert' : 'status'" aria-live="polite">{{errorMessage || statusMessage}}</div>
+    <section v-if="selectedShortcut" class="cheat-shortcut-inspector" :aria-label="'Options for ' + selectedShortcut.name">
+        <div class="cheat-control-heading"><h3>{{selectedShortcut.name}} options</h3><button type="button" class="cheat-button cheat-button--quiet" @click="selectedId = null">Done</button></div>
+        <div class="cheat-settings-fields">
+            <label v-for="paramId in Object.keys(selectedShortcut.paramDesc)" :key="paramId" class="cheat-settings-field">
+                <span>{{selectedShortcut.paramDesc[paramId].name}}</span>
+                <input class="cheat-number-input" v-model="selectedShortcut.param[paramId].value" :aria-label="selectedShortcut.paramDesc[paramId].name"
+                    @change="onParameterChange(selectedShortcut, paramId)">
+                <small>{{selectedShortcut.paramDesc[paramId].desc}}</small>
+            </label>
+        </div>
+    </section>
+    <div class="cheat-shortcut-header" aria-hidden="true"><span>Action</span><span>Key binding</span><span>Options</span></div>
+    <virtual-list ref="list" :items="filteredShortcuts" :item-height="80" label="Keyboard shortcuts"
+        empty-message="No matching shortcuts. Clear the search or key filter.">
+        <template v-slot:default="{item}">
+            <div class="cheat-shortcut-row">
+                <div class="cheat-row-copy"><span class="cheat-row-name">{{item.name}}</span><span class="cheat-row-meta">{{item.desc || (item.necessary ? 'Required to open the console.' : 'Customize this action.')}}</span></div>
+                <div class="cheat-binding-control">
+                    <input class="cheat-key-input" readonly :value="item.shortcut.asDisplayString()" placeholder="Not assigned"
+                        :aria-label="'Shortcut for ' + item.name" @keydown="onBindingKeydown($event, item)">
+                    <button type="button" class="cheat-icon-button" :disabled="item.necessary || item.shortcut.isEmpty()"
+                        :aria-label="'Clear shortcut for ' + item.name" @click="setShortcut(Key.createEmpty(), item)">×</button>
+                </div>
+                <button v-if="Object.keys(item.paramDesc).length" type="button" class="cheat-button cheat-button--quiet"
+                    :aria-label="'Options for ' + item.name" :aria-expanded="String(selectedId === item.id)"
+                    @click="selectedId = selectedId === item.id ? null : item.id">Options</button>
+                <span v-else class="cheat-row-meta">—</span>
+            </div>
         </template>
-        <template
-            v-slot:item.param="{ item, index }">
-            <v-btn
-                v-if="Object.keys(item.paramDesc).length > 0"
-                color="blue-grey"
-                dark
-                x-small
-                fab
-                @click="changeExpanded(item)">
-                <v-icon small>mdi-cog</v-icon>
-            </v-btn>
-        </template>
-        <template v-slot:expanded-item="{ headers, item }">
-            <td :colspan="headers.length" class="ma-0 pa-0">
-                <v-card 
-                    flat
-                    class="ma-0 py-2 px-0"
-                    v-if="Object.keys(item.paramDesc).length > 0">
-                    <v-card-subtitle
-                        class="py-0 mb-1">
-                        Parameters
-                    </v-card-subtitle>
-                    <v-card-text
-                        class="py-0 my-0 mb-1"
-                        v-for="paramKey in Object.keys(item.paramDesc)"
-                        :key="paramKey">
-                        <v-row
-                            class="ma-0 pa-0">
-                            <v-col
-                                class="pa-0"
-                                cols="12"
-                                md="3">
-                                <v-text-field
-                                    v-model="item.param[paramKey].value"
-                                    outlined
-                                    dense
-                                    hide-details
-                                    @keydown.self.stop
-                                    @change="onParameterChange($event, item, paramKey)"
-                                    :label="item.paramDesc[paramKey].name"
-                                    @focus="$event.target.select()">
-                                </v-text-field>
-                            </v-col>
-                            <v-col
-                                class="pa-0 d-inline-flex align-center"
-                                cols="12"
-                                md="9">
-                                <span class="ml-3">: {{item.paramDesc[paramKey].desc}}</span>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-            </td>
-        </template>
-    </v-data-table>
-</v-card>
-    `,
+    </virtual-list>
+</div>`,
 
     data () {
-        return {
-            shortcuts: [],
-
-            tableExpanded: [],
-
-            hideDesc: true,
-            search: '',
-            shortcutSearch: Key.createEmpty(),
-
-            tableHeaders: [
-                {
-                    text: 'Name',
-                    value: 'name'
-                },
-                {
-                    text: 'Desc',
-                    value: 'desc',
-                },
-                {
-                    text: 'Shortcut',
-                    value: 'shortcut'
-                },
-                {
-                    text: 'Param',
-                    value: 'param'
-                }
-            ]
-        }
+        return { shortcuts: [], search: '', shortcutSearch: Key.createEmpty(), selectedId: null, errorMessage: '', statusMessage: '', Key }
     },
-
-    created () {
-        this.initializeVariables()
-    },
-
+    created () { this.initializeVariables() },
     computed: {
-        filteredHeaders () {
-            return this.tableHeaders.filter(header => !this.hideDesc || header.value !== 'desc')
-        },
-
         filteredShortcuts () {
-            return this.shortcuts.filter(item => {
-                return this.shortcutSearch.isEmpty() || item.shortcut.contains(this.shortcutSearch)
-            })
-        }
+            const query = this.search.trim().toLowerCase()
+            return this.shortcuts.filter(item => (this.shortcutSearch.isEmpty() || item.shortcut.contains(this.shortcutSearch)) &&
+                (!query || (item.name + ' ' + item.desc + ' ' + item.shortcut.asDisplayString()).toLowerCase().includes(query)))
+        },
+        selectedShortcut () { return this.shortcuts.find(item => item.id === this.selectedId) }
     },
-
     methods: {
-        restoreToDefault () {
-            GLOBAL_SHORTCUT.restoreDefaultSettings()
-            this.initializeVariables()
+        initializeVariables () {
+            this.shortcuts = Object.keys(GLOBAL_SHORTCUT.shortcutConfig).map(id => {
+                const config = GLOBAL_SHORTCUT.getConfig(id)
+                const settings = GLOBAL_SHORTCUT.getSettings(id)
+                const param = {}
+                for (const key of Object.keys(settings.param || {})) param[key] = { value: settings.param[key] }
+                return { id, name: config.name, desc: config.desc, necessary: config.necessary,
+                    combiningKeyAlone: config.combiningKeyAlone, paramDesc: config.param || {},
+                    shortcut: Key.fromKey(settings.shortcut), param }
+            })
         },
-
-        onSearchChange (search) {
-          this.shortcutSearch = Key.createEmpty()
-        },
-
-        onShortcutSearchChange (key) {
+        resetScroll () { if (this.$refs.list) this.$refs.list.resetScroll() },
+        onSearchChange () { this.shortcutSearch = Key.createEmpty(); this.resetScroll() },
+        clearKeyFilter () { this.shortcutSearch = Key.createEmpty(); this.resetScroll() },
+        onFilterKeydown (event) {
+            if (event.key === 'Tab') return
+            event.preventDefault()
+            event.stopPropagation()
+            this.shortcutSearch = Key.fromEvent(event)
             this.search = ''
+            this.resetScroll()
         },
-
-        changeExpanded (item) {
-            if (this.tableExpanded.length === 1 && this.tableExpanded[0] === item) {
-                this.tableExpanded = []
-            } else {
-                this.tableExpanded = [item]
-            }
+        onBindingKeydown (event, item) {
+            if (event.key === 'Tab') return
+            event.preventDefault()
+            event.stopPropagation()
+            const key = Key.fromEvent(event)
+            if (!item.combiningKeyAlone && key.isCombiningKey()) return
+            this.setShortcut(key, item)
         },
-
-        onShortcutChange (key, item) {
+        setShortcut (key, item) {
             try {
                 GLOBAL_SHORTCUT.setShortcut(item.id, key)
-            } catch (err) {
-                Alert.error(err.message)
-            }
-
-            item.shortcut = GLOBAL_SHORTCUT.getShortcut(item.id)
+                item.shortcut = Key.fromKey(GLOBAL_SHORTCUT.getShortcut(item.id))
+                this.errorMessage = ''
+                this.statusMessage = item.name + ' binding updated.'
+            } catch (error) { this.errorMessage = error.message; this.statusMessage = '' }
         },
-
-        onParameterChange(value, item, paramId) {
+        onParameterChange (item, paramId) {
             try {
-                GLOBAL_SHORTCUT.setParam(item.id, paramId, value)
-            } catch (err) {
-                Alert.error(err.message)
-            }
-
-            item.param[paramId].value = GLOBAL_SHORTCUT.getParam(item.id, paramId)
+                GLOBAL_SHORTCUT.setParam(item.id, paramId, item.param[paramId].value)
+                item.param[paramId].value = GLOBAL_SHORTCUT.getParam(item.id, paramId)
+                this.errorMessage = ''
+                this.statusMessage = item.name + ' options updated.'
+            } catch (error) { this.errorMessage = error.message; this.statusMessage = '' }
         },
-
-        convertToInternalData (settings, config) {
-            const param = {}
-
-            if (settings.param) {
-                for (const paramName of Object.keys(settings.param)) {
-                    param[paramName] = {
-                        id: paramName,
-                        value: settings.param[paramName]
-                    }
-                }
-
-            }
-
-            return {
-                id: config.id,
-                name: config.name,
-                desc: config.desc,
-                necessary: config.necessary,
-                combiningKeyAlone: config.combiningKeyAlone,
-                paramDesc: config.param,
-
-                // use deep copy of settings
-                shortcut: Key.fromKey(settings.shortcut),
-                param: param
-            }
-        },
-
-        initializeVariables () {
-            this.shortcuts = Object.keys(GLOBAL_SHORTCUT.shortcutConfig).map(key => {
-                return this.convertToInternalData(GLOBAL_SHORTCUT.shortcutSettings[key], GLOBAL_SHORTCUT.shortcutConfig[key])
-            })
-        },
-
-        tableItemFilter (value, search, item) {
-            if (search === null || search.trim() === '') {
-                return true
-            }
-
-            search = search.toLowerCase()
-            return item.name.toLowerCase().contains(search) || item.desc.toLowerCase().contains(search) || item.shortcut.asDisplayString().toLowerCase().contains(search)
+        restoreToDefault () {
+            try {
+                GLOBAL_SHORTCUT.restoreDefaultSettings()
+                this.initializeVariables()
+                this.errorMessage = ''
+                this.statusMessage = 'Default bindings restored.'
+            } catch (error) { this.errorMessage = error.message }
         }
     }
 }

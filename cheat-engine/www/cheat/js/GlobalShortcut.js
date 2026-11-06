@@ -564,8 +564,8 @@ class GlobalShortcut {
             } catch (e) {
             }
 
-            this.initialize()
         }
+        this.initialize()
     }
 
     getSettings (shortcutId) {

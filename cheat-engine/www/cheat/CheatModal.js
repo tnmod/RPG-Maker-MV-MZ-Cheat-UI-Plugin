@@ -1,47 +1,48 @@
-import GeneralPanel from './panels/GeneralPanel.js'
-import HealthSettingPanel from './panels/HealthSettingPanel.js'
-import StatsSettingPanel from './panels/StatsSettingPanel.js'
-import ItemSettingPanel from './panels/ItemSettingPanel.js'
-import WeaponSettingPanel from './panels/WeaponSettingPanel.js'
-import ArmorSettingPanel from './panels/ArmorSettingPanel.js'
+import PlayPanel from './panels/PlayPanel.js'
+import GroupedToolsPanel from './components/GroupedToolsPanel.js'
+import ItemTableTab from './panels/ItemTableTab.js'
 import VariableSettingPanel from './panels/VariableSettingPanel.js'
 import SwitchSettingPanel from './panels/SwitchSettingPanel.js'
 import SaveRecallPanel from './panels/SaveRecallPanel.js'
 import TeleportPanel from './panels/TeleportPanel.js'
 import ShortcutPanel from './panels/ShortcutPanel.js'
 import TranslateSettingsPanel from './panels/TranslateSettingsPanel.js'
+import { KEY_VALUE_STORAGE } from './js/KeyValueStorage.js'
+import { readSavedLocations } from './js/SavedLocations.js'
 
-const navigationGroups = [
+const navigationItems = [
     {
-        name: 'Play',
-        items: [
-            { name: 'General', component: 'general-panel', description: 'Gold, movement and game speed.' },
-            { name: 'Battle', component: 'health-setting-panel', description: 'Manage encounters and party or enemy health.' },
-            { name: 'Stats', component: 'stats-setting-panel', description: 'Adjust character levels and attributes.' }
+        name: 'General', component: 'general-panel', description: 'Gold, party, movement, combat and saves.',
+        keywords: 'general battle stats level exp health hp mp tp god mode speed no clip encounters attributes',
+        aliases: ['general-panel', 'health-setting-panel', 'stats-setting-panel']
+    },
+    {
+        name: 'Inventory', component: 'inventory-panel', keywords: 'equipment amount quantity',
+        tools: [
+            { name: 'Items', component: 'item-setting-panel', readItems: () => $dataItems, description: 'Find items and consumables.' },
+            { name: 'Weapons', component: 'weapon-setting-panel', readItems: () => $dataWeapons, description: 'Browse weapons and swords.' },
+            { name: 'Armor', component: 'armor-setting-panel', readItems: () => $dataArmors, description: 'Browse armor, shields and equipment.' }
         ]
     },
     {
-        name: 'Inventory',
-        items: [
-            { name: 'Items', component: 'item-setting-panel', description: 'Find items and change the amount you carry.' },
-            { name: 'Weapons', component: 'weapon-setting-panel', description: 'Browse weapons and add them to your inventory.' },
-            { name: 'Armor', component: 'armor-setting-panel', description: 'Browse armor and add it to your inventory.' }
+        name: 'Travel', component: 'travel-panel', description: 'Save favorite locations or teleport to another map.',
+        tools: [
+            { name: 'Saved locations', component: 'save-recall-panel', view: SaveRecallPanel, description: 'Bookmark and recall locations.' },
+            { name: 'All maps', component: 'teleport-panel', view: TeleportPanel, description: 'Teleport to a map and coordinates.' }
         ]
     },
     {
-        name: 'World',
-        items: [
-            { name: 'Variables', component: 'variable-setting-panel', description: 'Find and edit game variables.' },
-            { name: 'Switches', component: 'switch-setting-panel', description: 'Find game switches and turn them on or off.' },
-            { name: 'Locations', component: 'save-recall-panel', description: 'Bookmark your position and return to saved locations.' },
-            { name: 'Teleport', component: 'teleport-panel', description: 'Choose a map and move to a new position.' }
+        name: 'Game data', component: 'game-data-panel', description: '',
+        tools: [
+            { name: 'Variables', component: 'variable-setting-panel', view: VariableSettingPanel, description: 'Edit variable values.' },
+            { name: 'Switches', component: 'switch-setting-panel', view: SwitchSettingPanel, description: 'Turn switches and flags on or off.' }
         ]
     },
     {
-        name: 'Preferences',
-        items: [
-            { name: 'Shortcuts', component: 'shortcut-panel', description: 'Choose keyboard shortcuts for your cheat tools.', titleScreen: true },
-            { name: 'Translation', component: 'translate-settings-panel', description: 'Configure the translation service for game data.', titleScreen: true }
+        name: 'Settings', component: 'settings-panel', description: 'Customize keyboard shortcuts and translation.', titleScreen: true,
+        tools: [
+            { name: 'Shortcuts', component: 'shortcut-panel', view: ShortcutPanel, description: 'Customize keyboard shortcuts and key bindings.' },
+            { name: 'Translation', component: 'translate-settings-panel', view: TranslateSettingsPanel, description: 'Configure a translation service.' }
         ]
     }
 ]
@@ -50,28 +51,25 @@ export default {
     name: 'CheatModal',
 
     components: {
-        GeneralPanel,
-        HealthSettingPanel,
-        StatsSettingPanel,
-        ItemSettingPanel,
-        WeaponSettingPanel,
-        ArmorSettingPanel,
-        VariableSettingPanel,
-        SwitchSettingPanel,
-        SaveRecallPanel,
-        TeleportPanel,
-        ShortcutPanel,
-        TranslateSettingsPanel
+        PlayPanel,
+        ItemTableTab,
+        GroupedToolsPanel
     },
 
     template: `
-<section class="cheat-console" role="dialog" aria-labelledby="cheat-console-title">
+<section class="cheat-console" :class="{'cheat-console--maximized': maximized}" role="dialog" aria-labelledby="cheat-console-title">
     <header class="cheat-console__header">
         <div class="cheat-console__brand">
             <span class="cheat-console__mark" aria-hidden="true">+</span>
             <h1 id="cheat-console-title">Cheat console</h1>
             <span class="cheat-engine-badge">{{engineName}}</span>
         </div>
+        <button type="button" class="cheat-window-button" :aria-label="maximized ? 'Restore window' : 'Maximize console'"
+            :title="maximized ? 'Restore window' : 'Maximize console'"
+            :aria-pressed="String(maximized)" @click="toggleMaximized">
+            <svg v-if="!maximized" width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+            <svg v-else width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 6V3h11v11h-3" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="6" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
         <button type="button" class="cheat-close-button" aria-label="Close cheat console" @click="$emit('close')">
             <span aria-hidden="true">×</span>
         </button>
@@ -84,30 +82,35 @@ export default {
                 <input id="cheat-tool-search" v-model="search" type="search" placeholder="Search tools…" autocomplete="off" @keydown.stop @keyup.stop>
             </div>
             <div class="cheat-nav-groups">
-                <section v-for="group in filteredGroups" :key="group.name" class="cheat-nav-group">
-                    <h2 class="cheat-nav-group__title">{{group.name}}</h2>
-                    <button v-for="item in group.items" :key="item.component" type="button"
-                        class="cheat-nav-button" :class="{'is-active': activeItem.component === item.component}"
+                    <button v-for="item in filteredItems" :key="item.component" type="button"
+                        class="cheat-nav-button" :class="{'is-active': activeItem.component === item.component, 'cheat-nav-button--settings': item.component === 'settings-panel'}"
                         :aria-current="activeItem.component === item.component ? 'page' : null"
                         @click="selectPanel(item.component)">
                         {{item.name}}
                     </button>
-                </section>
-                <p v-if="!filteredGroups.length" class="cheat-nav-empty" role="status">No tools found. Try another name.</p>
+                <p v-if="!filteredItems.length" class="cheat-nav-empty" role="status">No tools found. Try another name.</p>
             </div>
         </nav>
 
-        <div class="cheat-console__content">
+        <div class="cheat-console__content" :class="{'cheat-console__content--workspace': !!activeItem.tools}">
             <header class="cheat-section-header">
                 <h2>{{activeItem.name}}</h2>
-                <p>{{activeItem.description}}</p>
+                <p v-if="activeItem.description">{{activeItem.description}}</p>
             </header>
             <div class="cheat-section-body">
-                <component v-if="gameReady || activeItem.titleScreen" :is="activeItem.component"></component>
+                <template v-if="gameReady || activeItem.titleScreen">
+                    <item-table-tab v-if="inventoryTool" :items="inventoryTool.readItems() || []"
+                        :categories="activeItem.tools" :category="inventoryTool.component"
+                        @category-change="selectTool"></item-table-tab>
+                    <grouped-tools-panel v-else-if="activeItem.tools" :key="activeItem.component"
+                        :tools="activeTools" :active-component="currentComponentName" :label="activeItem.name"
+                        @change="selectTool" @saved-locations-change="setSavedLocationCount"></grouped-tools-panel>
+                    <component v-else :is="activeItem.component"></component>
+                </template>
                 <div v-else class="cheat-empty-state" role="status">
                     <span class="cheat-empty-state__symbol" aria-hidden="true">◇</span>
                     <h3>Start your adventure first</h3>
-                    <p>Start a new game or load a save to use {{activeItem.name.toLowerCase()}}. Shortcuts and Translation are available now.</p>
+                    <p>Start a new game or load a save to use {{activeItem.name.toLowerCase()}}. Settings are available now.</p>
                 </div>
             </div>
         </div>
@@ -124,25 +127,31 @@ export default {
     props: { currentComponentName: { type: String, default: 'general-panel' } },
 
     data () {
-        return { search: '', gameReady: false, readinessTimer: null, navigationGroups }
+        return { search: '', gameReady: false, maximized: false, readinessTimer: null, navigationItems,
+            lastToolByGroup: {}, savedLocationsEmpty: false }
     },
 
     computed: {
         activeItem () {
-            for (const group of this.navigationGroups) {
-                const item = group.items.find(item => item.component === this.currentComponentName)
-                if (item) return item
-            }
-            return this.navigationGroups[0].items[0]
+            return this.navigationItems.find(item => this.matchesRoute(item, this.currentComponentName)) || this.navigationItems[0]
         },
 
-        filteredGroups () {
+        inventoryTool () {
+            if (this.activeItem.component !== 'inventory-panel') return null
+            const tools = this.activeItem.tools
+            return tools.find(tool => tool.component === this.currentComponentName) || tools[0]
+        },
+
+        activeTools () {
+            const { component, tools } = this.activeItem
+            return component === 'travel-panel' && this.savedLocationsEmpty ? tools.slice().reverse() : tools
+        },
+
+        filteredItems () {
             const query = this.search.trim().toLowerCase()
-            if (!query) return this.navigationGroups
-            return this.navigationGroups.map(group => ({
-                name: group.name,
-                items: group.items.filter(item => (group.name + ' ' + item.name + ' ' + item.description).toLowerCase().includes(query))
-            })).filter(group => group.items.length)
+            if (!query) return this.navigationItems
+            return this.navigationItems.filter(item => this.matchesSearch(item, query) ||
+                (item.tools && item.tools.some(tool => this.matchesSearch(tool, query))))
         },
 
         engineName () {
@@ -152,8 +161,15 @@ export default {
 
     created () {
         this.refreshGameReady()
-        if (this.currentComponentName !== this.activeItem.component) {
+        if (!this.navigationItems.some(item => this.matchesRoute(item, this.currentComponentName))) {
             this.$emit('change', this.activeItem.component)
+        }
+    },
+
+    watch: {
+        currentComponentName: {
+            immediate: true,
+            handler (component) { this.rememberTool(component) }
         }
     },
 
@@ -166,7 +182,55 @@ export default {
     },
 
     methods: {
+        toggleMaximized () {
+            this.maximized = !this.maximized
+            if (typeof ResizeObserver === 'undefined') {
+                this.$nextTick(() => window.dispatchEvent(new Event('resize')))
+            }
+        },
+
+        matchesRoute (item, component) {
+            return item.component === component || (item.aliases && item.aliases.includes(component)) ||
+                (item.tools && item.tools.some(tool => tool.component === component))
+        },
+
+        matchesSearch (item, query) {
+            return (item.name + ' ' + (item.description || '') + ' ' + (item.keywords || '')).toLowerCase().includes(query)
+        },
+
+        rememberTool (component) {
+            const item = this.navigationItems.find(item => item.tools && this.matchesRoute(item, component))
+            if (!item) return
+            if (item.component === 'travel-panel') this.refreshSavedLocationCount()
+            if (item.component !== component) this.$set(this.lastToolByGroup, item.component, component)
+        },
+
+        setSavedLocationCount (count) {
+            this.savedLocationsEmpty = count === 0
+        },
+
+        refreshSavedLocationCount () {
+            try {
+                this.setSavedLocationCount(readSavedLocations(KEY_VALUE_STORAGE).length)
+            } catch (error) {
+                this.savedLocationsEmpty = false
+            }
+        },
+
         selectPanel (component) {
+            const item = this.navigationItems.find(item => item.component === component)
+            if (item && item.tools) {
+                const query = this.search.trim().toLowerCase()
+                const match = query ? item.tools.find(tool => this.matchesSearch(tool, query)) : null
+                if (component === 'travel-panel') this.refreshSavedLocationCount()
+                const fallback = component === 'travel-panel' && this.savedLocationsEmpty ? 'teleport-panel' :
+                    this.lastToolByGroup[component] || item.tools[0].component
+                component = match ? match.component : fallback
+            }
+            this.$emit('change', component)
+        },
+
+        selectTool (component) {
             this.$emit('change', component)
         },
 

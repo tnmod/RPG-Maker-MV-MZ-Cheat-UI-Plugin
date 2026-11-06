@@ -8,7 +8,7 @@ export default {
     },
 
     template: `
-<v-card flat class="ma-0 pa-0">
+<div class="cheat-data-host">
     <item-table-tab
         :items="items"
         :headers="headers"
@@ -16,7 +16,7 @@ export default {
         :searchable-attrs="['name', 'desc']">
         
     </item-table-tab>
-</v-card>
+</div>
     `,
 
     data () {
