@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cheat UI preview</title>
+    <style>
+        html, body { margin: 0; overflow: hidden; background: #0e1928; }
+        .preview-scene { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; color: #bac9dc; font: 16px "Segoe UI", sans-serif; background: radial-gradient(ellipse at 25% 30%, #314c52, transparent 55%), repeating-linear-gradient(0deg, #ffffff03 0, #ffffff03 1px, transparent 1px, transparent 48px), repeating-linear-gradient(90deg, #ffffff03 0, #ffffff03 1px, transparent 1px, transparent 48px), #14283b; }
+        .preview-scene h1 { font-size: 36px; font-weight: 400; margin: 0 0 12px; color: #e2ebef; }
+        .preview-scene p { margin: 0; max-width: 40ch; line-height: 1.6; }
+        .preview-label { position: absolute; bottom: 20px; left: 24px; font-size: 12px; color: #d0dce9; }
+    </style>
+</head>
+<body>
+    <main class="preview-scene" id="preview-game" tabindex="0">
+        <h1>The adventure continues</h1>
+        <p>Open Cheats to try the console with sample game data.</p>
+        <span class="preview-label">UI preview with a mock engine. No game or save files are modified.</span>
+    </main>
+    <script src="mock-engine.js"></script>
+    <script src="../cheat-engine/www/cheat/init/import.js"></script>
+</body>
+</html>

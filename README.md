@@ -1,3 +1,51 @@
+# UI fork in development
+
+This fork is updating the original cheat interface to make its existing tools easier to find and use. The first UI pass adds:
+
+- A visible **Cheats** launcher, a close button and a resizable-window-friendly console.
+- Grouped navigation with a **Find a tool** search field.
+- A redesigned General panel with explicit gold validation, movement controls and game-speed controls.
+- Keyboard focus feedback and input isolation while interacting with the console.
+- Local styles and icon fonts, so opening the UI does not require a CDN connection.
+
+The bundled Vue 2.6.14 and Vuetify 2.6.3 JavaScript versions are retained. Styles match Vuetify 2.6.3; icons use Material Design Icons 6.9.96. Their licenses are included beside the vendored assets under `cheat-engine/www/cheat/libs/`.
+
+## Try the UI preview
+
+From the repository root, run:
+
+```sh
+python -m http.server 8765 --bind 127.0.0.1
+```
+
+Open [the local preview](http://127.0.0.1:8765/preview/), then select **Cheats** or press **Ctrl+C**. Use [the MV fixture](http://127.0.0.1:8765/preview/?engine=MV) to show the MV engine label. The preview uses mock game data; it does not open a game or change real saves. See [preview/README.md](preview/README.md) for checks and limitations.
+
+## Development checks
+
+Run the Node tests from the repository root with a current Node.js version:
+
+```sh
+node --test tests/*.test.mjs
+```
+
+The optional browser smoke test uses Python Playwright:
+
+```sh
+python -m pip install playwright
+python -m playwright install chromium
+python tests/ui_smoke.py
+```
+
+These checks use simulated engine behavior. This UI pass has not established compatibility with real MV/MZ games or their third-party plugins, and is not a new packaged release.
+
+## Existing game installation
+
+The upstream installation instructions below still describe replacing `js/main.js`. That can overwrite custom startup code, including a game's ModLoader. This UI pass does not add a new installer or resolve that startup conflict; do not treat the browser preview as a ModLoader compatibility test. Keep a backup before trying the legacy installation on a copy of a game.
+
+---
+
+The original upstream README follows. Its screenshots show the earlier interface.
+
 - [RPG-Maker-MV-MZ-Cheat-UI-Plugin](#rpg-maker-mv-mz-cheat-ui-plugin)
 - [Intro](#intro)
   * [UI Sample](#ui-sample)

@@ -4,165 +4,116 @@ export default {
     name: 'GeneralPanel',
 
     template: `
-<v-card 
-    class="ma-0 pa-0"
-    flat>
-    <v-card-subtitle class="pb-0 font-weight-bold">Edit</v-card-subtitle>
-    
-    <v-card-text 
-        class="py-0">
-        <v-checkbox
-            v-model="noClip"
-            label="No Clip"
-            @change="onNoClipChange">
-        </v-checkbox>
-    </v-card-text>
-    
-    <v-card-text class="py-0">
-        <v-text-field
-            v-model="gold"
-            label="Gold"
-            outlined
-            dense
-            hide-details
-            @keydown.self.stop
-            @change="onGoldChange"
-            @focus="$event.target.select()">
-        </v-text-field>
-    </v-card-text>
-    
-    <v-card-text class="pt-4 pb-0">
-        <v-slider
-            v-model="speed"
-            :min="minSpeed"
-            :max="maxSpeed"
-            :step="stepSpeed"
-            thumb-label
-            thumb-color="red"
-            hide-details
-            @change="onSpeedChange">
-            <template v-slot:prepend>
-                <span class="grey--text text--lighten-1 align-self-center mr-2 body-2" style="white-space: nowrap;">Move Speed</span>
-                <v-icon color="grey lighten-3" @click="addSpeed(-stepSpeed)">mdi-chevron-left</v-icon>
-            </template>
-            <template v-slot:append>
-                <v-icon color="grey lighten-3" @click="addSpeed(stepSpeed)">mdi-chevron-right</v-icon>
-                <span class="grey--text text--lighten-1 align-self-center ml-2">{{speed.toFixed(1)}}</span>
-            </template>
-        </v-slider>
-        <v-checkbox
-            v-model="fixSpeed"
-            class="pt-0"
-            hide-details
-            dense
-            label="Fixed"
-            @change="onSpeedChange">
-        </v-checkbox>
-        
-        <v-slider
-            v-model="gameSpeed"
-            :min="minGameSpeed"
-            :max="maxGameSpeed"
-            :step="stepGameSpeed"
-            class="mt-3"
-            thumb-label
-            thumb-color="red"
-            hide-details
-            @change="onGameSpeedChange">
-            <template v-slot:prepend>
-                <span class="grey--text text--lighten-1 align-self-center mr-2 d-inline-block body-2" style="white-space: nowrap;">Game Speed</span>
-                <v-icon color="grey lighten-3" @click="addGameSpeed(-stepGameSpeed)">mdi-chevron-left</v-icon>
-            </template>
-            <template v-slot:append>
-                <v-icon color="grey lighten-3" @click="addGameSpeed(stepGameSpeed)">mdi-chevron-right</v-icon>
-                <span class="grey--text text--lighten-1 align-self-center ml-2 mr-2">x{{gameSpeed.toFixed(1)}}</span>
-                <v-icon size="16" color="grey lighten-3 ml-2" @click="setGameSpeed(1)">mdi-restore</v-icon>
-            </template>
-        </v-slider>
-        
-        <v-checkbox
-            v-model="applyAllForGameSpeed"
-            class="d-inline-flex pt-0"
-            hide-details
-            dense
-            label="All"
-            @change="onApplyAllForGameSpeedChange">
-        </v-checkbox>
-        <v-checkbox
-            v-model="applyBattleForGameSpeed"
-            class="d-inline-flex ml-2 pt-0 mb-0"
-            hide-details
-            dense
-            label="Battle"
-            @change="onApplyBattleForGameSpeedChange">
-        </v-checkbox>
-    </v-card-text>
-    
-    <v-card-subtitle class="mt-3 font-weight-bold">Quick Actions</v-card-subtitle>
-    
-    <v-card-text class="py-0">
-        <v-btn
-            small
-            @click="gotoTitle">
-            To Title
-        </v-btn>
-    </v-card-text>
-    
-    <v-card-text>
-        <v-btn 
-            small
-            class="mr-1"
-            @click="toggleSaveScene">
-            Open Save
-        </v-btn>
-        <v-btn
-            small
-            @click="toggleLoadScene">
-            Open Load
-        </v-btn>
-    </v-card-text>
-    
-    <v-tooltip
-        bottom>
-        <span>Reload from game data</span>
-        <template v-slot:activator="{ on, attrs }">
-            <v-btn
-                style="top: 0px; right: 0px;"
-                color="pink"
-                dark
-                small
-                absolute
-                top
-                right
-                fab
-                v-bind="attrs"
-                v-on="on"
-                @click="initializeVariables">
-                <v-icon>mdi-refresh</v-icon>
-            </v-btn>
-        </template>
-    </v-tooltip>
-</v-card>
-    `,
+<div class="cheat-general">
+    <div class="cheat-panel-toolbar">
+        <button type="button" class="cheat-button cheat-button--quiet" @click="initializeVariables">Refresh values</button>
+        <span class="cheat-inline-status" role="status" aria-live="polite">{{statusMessage}}</span>
+    </div>
+
+    <section class="cheat-control-section" aria-labelledby="cheat-gold-heading">
+        <div class="cheat-control-heading">
+            <h3 id="cheat-gold-heading">Gold</h3>
+            <span class="cheat-current-value">Current <strong>{{formattedGold}}</strong></span>
+        </div>
+        <form class="cheat-gold-form" @submit.prevent="onGoldChange">
+            <label for="cheat-gold-amount">Set amount</label>
+            <div class="cheat-input-row">
+                <input id="cheat-gold-amount" class="cheat-number-input" type="text" inputmode="numeric"
+                    v-model="goldDraft" :aria-invalid="goldError ? 'true' : 'false'"
+                    :aria-describedby="goldError ? 'cheat-gold-error' : 'cheat-gold-help'"
+                    autocomplete="off" @input="goldError = ''; statusMessage = ''" @keydown.stop @keyup.stop>
+                <button type="submit" class="cheat-button cheat-button--primary">Apply</button>
+            </div>
+            <p v-if="goldError" id="cheat-gold-error" class="cheat-inline-error" role="alert">{{goldError}}</p>
+            <p v-else id="cheat-gold-help" class="cheat-control-help">Enter the total gold you want to carry.</p>
+        </form>
+    </section>
+
+    <section class="cheat-control-section" aria-labelledby="cheat-movement-heading">
+        <div class="cheat-control-heading">
+            <h3 id="cheat-movement-heading">Movement</h3>
+            <output for="cheat-move-speed" class="cheat-value-badge">{{speed.toFixed(1)}}</output>
+        </div>
+        <label for="cheat-move-speed" class="cheat-field-label">Move speed</label>
+        <div class="cheat-range-row">
+            <span aria-hidden="true">{{minSpeed}}</span>
+            <input id="cheat-move-speed" type="range" v-model.number="speed" :min="minSpeed" :max="maxSpeed" :step="stepSpeed" @change="onSpeedChange" @keydown.stop @keyup.stop>
+            <span aria-hidden="true">{{maxSpeed}}</span>
+        </div>
+        <label class="cheat-toggle">
+            <input type="checkbox" v-model="fixSpeed" @change="onSpeedChange">
+            <span class="cheat-toggle__track" aria-hidden="true"></span>
+            <span class="cheat-control-copy"><strong>Lock move speed</strong><span>Keep this speed when the game changes it.</span></span>
+        </label>
+        <label class="cheat-toggle">
+            <input type="checkbox" v-model="noClip" @change="onNoClipChange">
+            <span class="cheat-toggle__track" aria-hidden="true"></span>
+            <span class="cheat-control-copy"><strong>Walk through walls</strong><span>Pass through obstacles on the map.</span></span>
+        </label>
+    </section>
+
+    <section class="cheat-control-section" aria-labelledby="cheat-game-speed-heading">
+        <div class="cheat-control-heading">
+            <h3 id="cheat-game-speed-heading">Game speed</h3>
+            <div class="cheat-control-heading__actions">
+                <output for="cheat-game-speed" class="cheat-value-badge">{{gameSpeed.toFixed(1)}}×</output>
+                <button type="button" class="cheat-button cheat-button--quiet" @click="setGameSpeed(1)">Reset</button>
+            </div>
+        </div>
+        <label for="cheat-game-speed" class="cheat-field-label">Speed multiplier</label>
+        <div class="cheat-range-row">
+            <span aria-hidden="true">0.1×</span>
+            <input id="cheat-game-speed" type="range" v-model.number="gameSpeed" :min="minGameSpeed" :max="maxGameSpeed" :step="stepGameSpeed" @change="onGameSpeedChange" @keydown.stop @keyup.stop>
+            <span aria-hidden="true">10×</span>
+        </div>
+        <fieldset class="cheat-scene-fieldset">
+            <legend>Apply speed to</legend>
+            <div class="cheat-segmented">
+                <label :class="{'is-active': gameSpeedScope === 'all'}">
+                    <input type="radio" name="cheat-speed-scope" value="all" v-model="gameSpeedScope" @change="onGameSpeedChange">
+                    <span>All scenes</span>
+                </label>
+                <label :class="{'is-active': gameSpeedScope === 'battle'}">
+                    <input type="radio" name="cheat-speed-scope" value="battle" v-model="gameSpeedScope" @change="onGameSpeedChange">
+                    <span>Battles only</span>
+                </label>
+            </div>
+        </fieldset>
+    </section>
+
+    <section class="cheat-control-section cheat-control-section--last" aria-labelledby="cheat-quick-actions-heading">
+        <div class="cheat-control-heading"><h3 id="cheat-quick-actions-heading">Quick actions</h3></div>
+        <div class="cheat-quick-actions">
+            <button type="button" class="cheat-button" @click="toggleSaveScene">Open save</button>
+            <button type="button" class="cheat-button" @click="toggleLoadScene">Open load</button>
+            <button type="button" class="cheat-button" @click="gotoTitle">Return to title</button>
+        </div>
+    </section>
+</div>`,
 
     data () {
         return {
-            godMode: false,
             noClip: false,
             gold: 0,
-            speed: 0,
+            goldDraft: '0',
+            goldError: '',
+            statusMessage: '',
+            speed: 4,
             fixSpeed: false,
-
             minSpeed: 1,
             maxSpeed: 10,
             stepSpeed: 0.5,
-
             gameSpeed: 1,
             minGameSpeed: 0.1,
             maxGameSpeed: 10,
             stepGameSpeed: 0.1,
-            applyAllForGameSpeed: false,
-            applyBattleForGameSpeed: false
+            gameSpeedScope: 'all'
+        }
+    },
+
+    computed: {
+        formattedGold () {
+            return Number(this.gold).toLocaleString()
         }
     },
 
@@ -172,51 +123,49 @@ export default {
 
     methods: {
         initializeVariables () {
-            this.noClip = $gamePlayer._through
-            this.speed = $gamePlayer.moveSpeed()
+            this.noClip = !!$gamePlayer._through
+            this.speed = Number($gamePlayer.moveSpeed())
             this.fixSpeed = SpeedCheat.isFixed()
-            this.gold = $gameParty._gold
-
-            this.gameSpeed = GameSpeedCheat.getRate()
-            const gameSpeedSceneOption = GameSpeedCheat.getSceneOption()
-            if (gameSpeedSceneOption === GameSpeedCheat.sceneOptions().all) {
-                this.applyAllForGameSpeed = true
-            } else if (gameSpeedSceneOption === GameSpeedCheat.sceneOptions().battle) {
-                this.applyBattleForGameSpeed = true
-            }
+            this.gold = typeof $gameParty.gold === 'function' ? $gameParty.gold() : $gameParty._gold
+            this.goldDraft = String(this.gold)
+            this.goldError = ''
+            this.gameSpeed = Number(GameSpeedCheat.getRate())
+            this.gameSpeedScope = GameSpeedCheat.getSceneOption() === GameSpeedCheat.sceneOptions().battle ? 'battle' : 'all'
         },
 
         onNoClipChange () {
             GeneralCheat.toggleNoClip()
-            this.initializeVariables()
+            this.noClip = !!$gamePlayer._through
         },
 
         onSpeedChange () {
             SpeedCheat.setSpeed(this.speed, this.fixSpeed)
             SpeedCheat.__writeSettings(this.speed, this.fixSpeed)
-            this.initializeVariables()
-        },
-
-        addSpeed (amount) {
-            this.speed = Math.min(Math.max(this.speed + amount, this.minSpeed), this.maxSpeed)
-            this.onSpeedChange()
         },
 
         onGoldChange () {
-            if (isNaN(this.gold) || !Number.isInteger(Number(this.gold)) || this.gold < 0) {
+            const draft = String(this.goldDraft).trim()
+            const amount = Number(draft)
+            if (!/^\d+$/.test(draft) || !Number.isSafeInteger(amount)) {
+                this.goldError = 'Enter a whole number of zero or more.'
+                this.statusMessage = ''
                 return
             }
 
-            const diff = this.gold - $gameParty._gold
-
-            if (diff < 0) {
-                $gameParty.loseGold(-diff)
-            } else if (diff > 0) {
-                $gameParty.gainGold(diff)
+            const maxGold = typeof $gameParty.maxGold === 'function' ? $gameParty.maxGold() : Number.MAX_SAFE_INTEGER
+            if (amount > maxGold) {
+                this.goldError = 'This game allows up to ' + Number(maxGold).toLocaleString() + ' gold.'
+                this.statusMessage = ''
+                return
             }
 
-            this.gold = $gameParty._gold
+            const currentGold = typeof $gameParty.gold === 'function' ? $gameParty.gold() : $gameParty._gold
+            const difference = amount - currentGold
+            if (difference < 0) $gameParty.loseGold(-difference)
+            else if (difference > 0) $gameParty.gainGold(difference)
+
             this.initializeVariables()
+            this.statusMessage = 'Gold updated to ' + this.formattedGold + '.'
         },
 
         gotoTitle () {
@@ -232,45 +181,13 @@ export default {
         },
 
         onGameSpeedChange () {
-            let sceneOption = null
-            if (this.applyAllForGameSpeed) {
-                sceneOption = GameSpeedCheat.sceneOptions().all
-            } else if (this.applyBattleForGameSpeed) {
-                sceneOption = GameSpeedCheat.sceneOptions().battle
-            }
-
+            const sceneOption = GameSpeedCheat.sceneOptions()[this.gameSpeedScope]
             GameSpeedCheat.setGameSpeed(this.gameSpeed, sceneOption)
             GameSpeedCheat.__writeSettings(this.gameSpeed, sceneOption)
-            this.initializeVariables()
-        },
-
-        addGameSpeed (amount) {
-            this.gameSpeed = Math.min(Math.max(this.gameSpeed + amount, this.minGameSpeed), this.maxGameSpeed)
-            this.onGameSpeedChange()
         },
 
         setGameSpeed (amount) {
-            this.gameSpeed = 1
-            this.onGameSpeedChange()
-        },
-
-        onApplyAllForGameSpeedChange () {
-            if (this.applyAllForGameSpeed) {
-                this.applyBattleForGameSpeed = false
-            } else {
-                this.applyBattleForGameSpeed = true
-            }
-
-            this.onGameSpeedChange()
-        },
-
-        onApplyBattleForGameSpeedChange () {
-            if (this.applyBattleForGameSpeed) {
-                this.applyAllForGameSpeed = false
-            } else {
-                this.applyAllForGameSpeed = true
-            }
-
+            this.gameSpeed = amount
             this.onGameSpeedChange()
         }
     }
